@@ -1,0 +1,672 @@
+================================================================================
+                        STUDYNOTES APP - ARCHITECTURE NOTES
+                              Updated: 2026-06-21
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FOLDER STRUCTURE
+--------------------------------------------------------------------------------
+
+StudyNotes/
+├── Backend/
+│   ├── app.py                  ← Flask server (all routes & API endpoints)
+│   ├── database.py             ← SQLite database layer
+│   ├── database.db             ← SQLite database file (auto-created on init)
+│   ├── OCR/
+│   │   ├── OCR.py              ← Image-to-text extraction engine
+│   │   ├── Upload/             ← Incoming uploaded images stored here
+│   │   └── Processed/          ← Structured JSON output from OCR + AI
+│   ├── Agents/
+│   │   ├── ocr_node_agent.py   ← OCR pipeline + Gemini → mind map JSON
+│   │   ├── chatbot.py          ← Gemini chatbot with per-session history (fallback)
+│   │   ├── update_mindmap.py   ← (Mind map update utility)
+│   │   └── logger.py           ← Logging utility
+│   └── RAG/                    ← RAG Pipeline (retrieval-augmented generation)
+│       ├── __init__.py
+│       ├── config.py           ← Reads Config/config.properties, exposes typed constants
+│       ├── ingestion.py        ← Load nodes from SQLite, clean, normalise, tag metadata
+│       ├── chunking.py         ← Fixed / overlapping / semantic chunking strategies
+│       ├── embeddings.py       ← sentence-transformers all-MiniLM-L6-v2 (free, 384-dim)
+│       ├── vector_store.py     ← Qdrant CRUD: create collection, upsert, search, delete
+│       ├── retrieval.py        ← Hybrid search (dense + BM25 + RRF) + cross-encoder rerank
+│       ├── prompt_templates.py ← LangChain prompt templates (RAG, web, intent)
+│       ├── generation.py       ← Gemini LLM generation layer (RAG + web modes)
+│       ├── cache.py            ← TTL in-memory query result cache (thread-safe)
+│       ├── web_search.py       ← DuckDuckGo internet fallback (no API key required)
+│       ├── monitoring.py       ← Precision@k, Recall@k, MRR, latency metrics
+│       ├── guardrails.py       ← Input validation, bias filter, hallucination detection
+│       └── pipeline.py         ← Main orchestrator: ingest() + query()
+│
+├── Frontend/
+│   ├── login-card-demo.html    ← Login page UI prototype
+│   └── node-tree_11.html       ← Main mind map UI (served after login)
+│
+├── MindForge/
+│   └── public/
+│       └── ocr_nodes.json      ← Auto-import bridge: OCR output copied here
+│
+├── Config/
+│   └── config.properties       ← All config keys (Gemini, Qdrant, RAG, LangChain)
+│
+├── logs/
+│   └── rag_metrics.jsonl       ← RAG query metrics log (JSONL, rotating)
+│
+├── main.py                     ← Entry point stub
+├── ARCHITECTURE.txt            ← This file
+└── Requirements.txt            ← Python dependencies
+
+
+--------------------------------------------------------------------------------
+TECH STACK
+--------------------------------------------------------------------------------
+
+  Layer               Technology
+  ─────────────────────────────────────────────────────────────────────
+  Web Framework       Flask (Python) + Flask-CORS
+  Database            SQLite (via Python sqlite3, no ORM)
+  Vector Database     Qdrant (local Docker or cloud) — hybrid search
+  AI / LLM            Google Gemini 2.5 Flash (via LangChain)
+  Embeddings          sentence-transformers all-MiniLM-L6-v2 (free, 384-dim)
+  Keyword Search      BM25 via rank-bm25 library
+  Re-ranking          cross-encoder/ms-marco-MiniLM-L-6-v2 (transformer)
+  Rank Fusion         Reciprocal Rank Fusion (RRF) — dense + BM25 merge
+  Web Search          DuckDuckGo (free, no API key) via duckduckgo-search
+  OCR                 Custom OCR.py (image → raw text)
+  Frontend            Plain HTML / JavaScript (no framework)
+  Config              .properties file (key=value format)
+  Package Manager     uv (pyproject.toml + uv.lock)
+
+
+--------------------------------------------------------------------------------
+DATABASE SCHEMA  (SQLite — Backend/database.db)
+--------------------------------------------------------------------------------
+
+  TABLE: users
+  ┌─────────────┬─────────────────────────────────────────────┐
+  │ id          │ INTEGER PRIMARY KEY AUTOINCREMENT           │
+  │ username    │ TEXT UNIQUE NOT NULL                        │
+  │ email       │ TEXT NOT NULL                               │
+  │ password    │ TEXT NOT NULL  ⚠ plaintext, not hashed      │
+  │ is_admin    │ BOOLEAN DEFAULT 0                           │
+  │ full_name   │ TEXT (added via ALTER TABLE migration)      │
+  │ location    │ TEXT (added via ALTER TABLE migration)      │
+  └─────────────┴─────────────────────────────────────────────┘
+
+  TABLE: maps
+  ┌─────────────┬─────────────────────────────────────────────┐
+  │ id          │ INTEGER PRIMARY KEY AUTOINCREMENT           │
+  │ user_id     │ INTEGER FK → users.id                      │
+  │ nodes_json  │ TEXT (JSON blob of the full mind map)       │
+  └─────────────┴─────────────────────────────────────────────┘
+  One row per user — saving overwrites (UPSERT pattern).
+
+  TABLE: map_snapshots
+  ┌─────────────┬─────────────────────────────────────────────┐
+  │ id          │ INTEGER PRIMARY KEY AUTOINCREMENT           │
+  │ user_id     │ INTEGER FK → users.id                      │
+  │ nodes_json  │ TEXT (JSON blob snapshot)                   │
+  │ created_at  │ TIMESTAMP DEFAULT CURRENT_TIMESTAMP         │
+  └─────────────┴─────────────────────────────────────────────┘
+  Auto-created on every save. Provides full version history.
+
+  Seed Data (auto-inserted if 'admin' user doesn't exist):
+  - admin / admin@example.com / password: admin  (is_admin = true)
+  - user1–user5 / userN@dummy.com / password: password1
+
+
+--------------------------------------------------------------------------------
+QDRANT VECTOR STORE SCHEMA
+--------------------------------------------------------------------------------
+
+  Collection: studynotes_nodes  (configurable via QDRANT_COLLECTION)
+
+  Point structure:
+  ┌──────────────────┬──────────────────────────────────────────────────┐
+  │ id               │ UUID (deterministic from chunk_id via UUID5)     │
+  │ vector           │ float[384]  (all-MiniLM-L6-v2 dense embedding)   │
+  │ payload.user_id  │ int   ← used for per-user filtered search        │
+  │ payload.chunk_id │ str   (e.g. "1_root_c0")                         │
+  │ payload.doc_id   │ str   (e.g. "1_root")                            │
+  │ payload.text     │ str   (chunk text used for BM25 + display)       │
+  │ payload.label    │ str   (mind map node label)                      │
+  │ payload.node_id  │ str   (original node id from nodes_json)         │
+  │ payload.parent_id│ str | null                                       │
+  │ payload.source   │ "mindmap"                                        │
+  │ payload.timestamp│ ISO-8601 string                                  │
+  │ payload.chunk_index │ int                                           │
+  └──────────────────┴──────────────────────────────────────────────────┘
+
+
+--------------------------------------------------------------------------------
+API ENDPOINTS  (Backend/app.py)
+--------------------------------------------------------------------------------
+
+  AUTH ROUTES
+  ───────────────────────────────────────────────────────────────────────────
+  GET  /               Redirect to /app if logged in, else /login
+  GET  /login          Serve login HTML template
+  POST /login          Authenticate user → set session → redirect /app
+  POST /signup         Create new user → set session → redirect /app
+  GET  /logout         Clear session → redirect /login
+  GET  /app            Serve node-tree_11.html (requires login)
+  GET  /api/me         Return { user_id, is_admin } for current session
+
+  NODE MAP ROUTES
+  ───────────────────────────────────────────────────────────────────────────
+  GET  /api/nodes                     Load current user's mind map JSON
+  POST /api/nodes                     Save mind map JSON (also auto-snapshots)
+  GET  /api/snapshots                 List all snapshots (id + created_at)
+  GET  /api/snapshots/<snapshot_id>   Get a specific historical snapshot
+
+  AI / PROCESSING ROUTES
+  ───────────────────────────────────────────────────────────────────────────
+  POST /upload          Upload image → OCR → Gemini → return node JSON
+  POST /generate-text   Text input → node generation OR RAG/chatbot response
+                        (dispatches based on keyword detection)
+
+  RAG PIPELINE ROUTES
+  ───────────────────────────────────────────────────────────────────────────
+  POST /api/rag/ingest  Index current user's mind map nodes into Qdrant
+                        Body (optional): { "user_id": int }
+                        Returns: { status, chunks_indexed }
+  GET  /api/rag/stats   Return RAG monitoring metrics (admin only)
+                        Returns: { total_queries, rag_queries, web_queries,
+                                   cache_hits, cache_hit_rate, avg_latency_ms,
+                                   avg_precision_at_k, avg_recall_at_k, avg_mrr }
+
+  ADMIN ROUTES
+  ───────────────────────────────────────────────────────────────────────────
+  GET  /admin                         Admin dashboard (lists all users)
+  POST /admin/update_user/<user_id>   Update any user's email/password
+  GET  /admin/view_map/<user_id>      View any user's mind map
+  GET  /api/nodes?user_id=X           Admin can load any user's map
+
+
+--------------------------------------------------------------------------------
+DATA FLOW — ALL SCENARIOS
+--------------------------------------------------------------------------------
+
+1. USER AUTH FLOW
+─────────────────
+  Browser → POST /login { username, password }
+          → database.authenticate()
+          → Flask session: { user_id, is_admin }
+          → 302 Redirect → GET /app
+          → Serves Frontend/node-tree_11.html
+
+  New User → POST /signup { username, email, password, full_name, location }
+           → database.create_user()
+           → Flask session set
+           → 302 Redirect → GET /app
+
+
+2. IMAGE UPLOAD → MIND MAP FLOW
+────────────────────────────────
+  User selects image in UI
+    → POST /upload  (multipart form)
+    → File saved to Backend/OCR/Upload/<filename>
+    → ocr_node_agent.process_images_and_structure(filename)
+         Step A: OCR.py.perform_ocr_on_file(filepath)
+                 → Extracts raw text from image
+         Step B: LangChain chain.invoke({ ocr_text })
+                 → Gemini 2.5 Flash with structured prompt
+                 → Returns JSON:
+                   {
+                     "nodes": [
+                       { "id": "root", "label": "...", "description": "...", "parentId": null },
+                       { "id": "n1",   "label": "...", "description": "...", "parentId": "root" },
+                       { "id": "n2",   "label": "...", "description": "...", "parentId": "n1" }
+                     ]
+                   }
+         Step C: JSON saved to Backend/OCR/Processed/<name>_structure.json
+         Step D: JSON also copied to MindForge/public/ocr_nodes.json
+    → JSON returned in HTTP response
+    → Frontend renders nodes as interactive tree/mind map
+
+
+3. TEXT-TO-NODES FLOW
+──────────────────────
+  User types: "generate node <topic>" or "create mind map about ..."
+    → POST /generate-text { text, session_id }
+    → Keyword detection (contains "generate node" / "create node" / "mind map" / "mindmap")
+    → chain.invoke({ ocr_text: text })  ← same Gemini chain as OCR flow
+    → Returns { type: "nodes", data: { nodes: [...] } }
+    → Frontend renders as mind map
+
+
+4. RAG CHATBOT FLOW  ★ NEW
+────────────────────────────────────────────────────────────
+  User types any other message (not a node-generation keyword)
+    → POST /generate-text { text, session_id }
+    → pipeline.query(text, user_id, session_id)
+
+    ┌─────────────────────────────────────────────────────────┐
+    │                   RAG PIPELINE FLOW                     │
+    │                                                         │
+    │  1. Guardrail: validate_query()                         │
+    │     ├─ Reject empty / too-long / harmful queries        │
+    │     └─ Pass → continue                                  │
+    │                                                         │
+    │  2. Cache lookup (TTL=300s)                             │
+    │     ├─ Hit  → return cached result immediately          │
+    │     └─ Miss → continue                                  │
+    │                                                         │
+    │  3. Intent Classification                               │
+    │     ├─ Fast-path keyword match (no LLM cost)            │
+    │     │    NOTES keywords  → intent = NOTES               │
+    │     │    EXTERNAL keywords → intent = EXTERNAL          │
+    │     └─ Fallback: Gemini LLM classifier                  │
+    │          → replies "NOTES" or "EXTERNAL"                │
+    │                                                         │
+    │  4a. NOTES path (RAG)                                   │
+    │     ├─ Embed query (all-MiniLM-L6-v2, 384-dim)         │
+    │     ├─ Dense search  → Qdrant cosine similarity         │
+    │     │    filtered by user_id (per-user isolation)       │
+    │     ├─ BM25 search   → rank-bm25 over user's corpus     │
+    │     ├─ RRF fusion    → merge dense + BM25 ranked lists  │
+    │     ├─ Cross-encoder rerank (ms-marco-MiniLM-L-6-v2)   │
+    │     ├─ Build context string from top-N chunks           │
+    │     └─ Gemini generates answer with citations           │
+    │          "Answer using ONLY provided context"           │
+    │                                                         │
+    │  4b. EXTERNAL path (Web)                                │
+    │     ├─ No results in Qdrant? also falls here            │
+    │     ├─ DuckDuckGo search (max 5 results, no API key)    │
+    │     └─ Gemini generates answer from search results      │
+    │                                                         │
+    │  5. Output Guardrail: check_output()                    │
+    │     ├─ Detect hallucination signals                     │
+    │     ├─ Strip prompt leakage artefacts                   │
+    │     └─ Append disclaimer if flags raised                │
+    │                                                         │
+    │  6. Record metrics (latency, mode, cache hit rate)      │
+    │                                                         │
+    │  7. Cache result                                        │
+    │                                                         │
+    │  8. Return response                                     │
+    │     { answer, sources, mode, metrics }                  │
+    └─────────────────────────────────────────────────────────┘
+
+    → Returns { type: "chat", message, sources, mode, metrics }
+    → Frontend displays answer + sources
+
+  Fallback: if Qdrant is unreachable, pipeline raises an exception
+    → app.py catches it → falls back to plain Gemini chatbot (chatbot.py)
+
+
+5. RAG INGESTION FLOW  ★ NEW
+──────────────────────────────
+  Trigger: POST /api/rag/ingest  (call after user saves their mind map)
+    → pipeline.ingest(user_id)
+         Step 1: ingestion.load_user_documents(user_id)
+                 → database.get_user_maps(user_id)
+                 → Parse JSON nodes, clean & normalise text
+                 → Tag each document with user_id, timestamp, source="mindmap"
+         Step 2: chunking.chunk_documents(docs, strategy="semantic")
+                 → Split on sentence boundaries, merge to CHUNK_SIZE (300 chars)
+                 → Each chunk carries full metadata (user_id, node_id, label, ...)
+         Step 3: embeddings.embed_chunks(chunks)
+                 → sentence-transformers all-MiniLM-L6-v2
+                 → 384-dimensional dense vector per chunk
+         Step 4: vector_store.delete_user_data(user_id)
+                 → Remove stale Qdrant points for this user (idempotent re-ingest)
+         Step 5: vector_store.upsert_chunks(chunks)
+                 → Deterministic UUID per chunk (UUID5 of chunk_id)
+                 → Batched upsert (256 points per batch)
+         Step 6: cache.invalidate_user_cache(user_id)
+                 → Clear stale cached answers for this user
+    → Returns { status: "ok"|"empty", chunks_indexed: N }
+
+
+6. MIND MAP SAVE / LOAD FLOW
+─────────────────────────────
+  Save:
+    Frontend → POST /api/nodes { nodes: [...] }
+             → database.save_user_maps(user_id, nodes)
+             → UPSERT into maps table
+             → INSERT new row into map_snapshots (auto version history)
+             → Returns { message: "Saved successfully" }
+
+  Load:
+    Frontend → GET /api/nodes
+             → database.get_user_maps(user_id)
+             → Returns { nodes: [...] }
+
+  Restore Snapshot:
+    Frontend → GET /api/snapshots              → list of { id, created_at }
+             → GET /api/snapshots/<id>          → { nodes: [...] } of that point in time
+
+
+7. ADMIN FLOW
+──────────────
+  Admin login → session.is_admin = True
+  GET /admin  → lists all users (id, username, email, is_admin, full_name, location)
+  POST /admin/update_user/<id> { email, password } → updates any user
+  GET /admin/view_map/<id> → redirects to /app?user_id=<id>
+  GET /api/nodes?user_id=<id> → loads that user's map (admin-only bypass)
+  GET /api/rag/stats → view RAG monitoring metrics
+
+
+--------------------------------------------------------------------------------
+RAG PIPELINE — MODULE DETAILS
+--------------------------------------------------------------------------------
+
+  MODULE: config.py
+  ─────────────────────────────────────────────────────
+  Reads Config/config.properties and exposes typed Python constants.
+  Same load_config() pattern used by chatbot.py and ocr_node_agent.py.
+
+  Key constants:
+    QDRANT_URL            http://localhost:6333
+    QDRANT_COLLECTION     studynotes_nodes
+    EMBEDDING_MODEL       sentence-transformers/all-MiniLM-L6-v2
+    EMBEDDING_DIM         384
+    CHUNK_SIZE            300
+    CHUNK_OVERLAP         50
+    TOP_K                 5
+    HYBRID_ALPHA          0.6   (dense weight in RRF; 0.4 = BM25 weight)
+    RERANK_MODEL          cross-encoder/ms-marco-MiniLM-L-6-v2
+    RERANK_TOP_N          3
+    CACHE_TTL             300   (seconds)
+    LLM_TEMPERATURE       0.3
+    WEB_SEARCH_MAX_RESULTS 5
+
+
+  MODULE: ingestion.py
+  ─────────────────────────────────────────────────────
+  load_user_documents(user_id) → list[dict]
+  load_all_documents()         → list[dict]  (admin batch ingest)
+
+  Document schema:
+    { doc_id, user_id, node_id, label, parent_id, text, source, timestamp, metadata }
+
+  Preprocessing:
+    - Strip control characters
+    - Collapse whitespace
+    - Combine label + description into a single searchable text field
+
+
+  MODULE: chunking.py
+  ─────────────────────────────────────────────────────
+  chunk_documents(docs, strategy, chunk_size, chunk_overlap) → list[dict]
+
+  Strategies:
+    fixed      — split every CHUNK_SIZE chars with CHUNK_OVERLAP overlap
+    overlapping — alias for fixed
+    semantic   — split on sentence boundaries (. ! ?), merge to size limit
+                  Default strategy used by the pipeline
+
+  Chunk schema:
+    { chunk_id, doc_id, text, chunk_index, metadata }
+
+
+  MODULE: embeddings.py
+  ─────────────────────────────────────────────────────
+  embed_texts(texts)   → list[list[float]]
+  embed_query(query)   → list[float]
+  embed_chunks(chunks) → list[dict]  (adds 'embedding' key in-place)
+
+  Model: sentence-transformers/all-MiniLM-L6-v2
+  - 384-dimensional output
+  - ~80MB model, loaded once at module level
+  - Free, no API key, runs locally
+
+
+  MODULE: vector_store.py
+  ─────────────────────────────────────────────────────
+  ensure_collection()               → create if not exists
+  upsert_chunks(chunks)             → int (points upserted)
+  dense_search(vec, user_id, top_k) → list[dict]  (cosine NN search)
+  keyword_search(kw, user_id, top_k)→ list[dict]  (scroll + text filter)
+  delete_user_data(user_id)         → None
+  get_all_user_chunks(user_id)      → list[dict]  (BM25 corpus build)
+
+  All searches are filtered by user_id payload → per-user data isolation.
+
+
+  MODULE: retrieval.py
+  ─────────────────────────────────────────────────────
+  retrieve(query, user_id, top_k, rerank_top_n) → list[dict]
+
+  Pipeline:
+    1. Embed query → dense_search(top_k * 2)
+    2. get_all_user_chunks → BM25Okapi.get_scores → top (top_k * 2)
+    3. Reciprocal Rank Fusion (k=60):
+         RRF_score = α * 1/(k+rank_dense) + (1-α) * 1/(k+rank_bm25)
+    4. Cross-encoder re-rank: CrossEncoder.predict([(query, text)])
+    5. Return top RERANK_TOP_N results
+
+
+  MODULE: generation.py
+  ─────────────────────────────────────────────────────
+  generate_from_context(question, chunks) → { answer, sources, mode="rag" }
+  generate_from_web(question, results)    → { answer, sources, mode="web" }
+  classify_intent(question)               → "NOTES" | "EXTERNAL"
+
+  LLM: ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
+  RAG prompt: "Answer using ONLY the provided context. Cite sources."
+  Web prompt: "Use search results as primary source. Cite inline as (Source N)."
+  Intent prompt: Returns exactly "NOTES" or "EXTERNAL"
+
+
+  MODULE: cache.py
+  ─────────────────────────────────────────────────────
+  get_cached(user_id, query)         → dict | None
+  set_cached(user_id, query, value)  → None
+  invalidate_user_cache(user_id)     → int (entries removed)
+
+  Implementation:
+    - Key: SHA-256 of f"{user_id}::{query.lower()}"
+    - TTL: configurable (default 300s)
+    - Max size: configurable (default 100 entries)
+    - LRU-like eviction when full (remove entry with earliest expiry)
+    - Thread-safe (threading.Lock)
+
+
+  MODULE: web_search.py
+  ─────────────────────────────────────────────────────
+  search(query, max_results) → list[{ title, href, body }]
+
+  Provider: DuckDuckGo via duckduckgo-search library
+  - No API key required
+  - Free, anonymous
+  - Falls back to [] if package unavailable or search fails
+
+
+  MODULE: monitoring.py
+  ─────────────────────────────────────────────────────
+  record_query(query, mode, latency_ms, user_id) → None
+  evaluate_retrieval(retrieved_ids, relevant_ids, k) → { precision, recall, mrr }
+  get_stats()   → aggregated metrics dict
+  reset_stats() → None
+
+  Metrics tracked:
+    - total_queries, rag_queries, web_queries, cache_hits
+    - cache_hit_rate = cache_hits / total_queries
+    - avg_latency_ms
+    - avg_precision@k, avg_recall@k, avg_MRR  (when ground truth supplied)
+
+  Persistence: appended as JSONL to logs/rag_metrics.jsonl
+
+
+  MODULE: guardrails.py
+  ─────────────────────────────────────────────────────
+  validate_query(query)                    → GuardrailResult
+  check_output(answer, context_chunks)     → GuardrailResult
+  sanitise_sources(sources)               → list[str]
+
+  Input checks:
+    - Minimum length (2 chars), maximum length (2000 chars)
+    - Regex block list: weapons, CSAM, doxxing, self-harm instructions
+
+  Output checks:
+    - Strip leaked system-prompt fragments
+    - Detect hallucination signals ("as of my training", "generally speaking", ...)
+    - Flag answers with no context chunks that are suspiciously long
+    - Append disclaimer when flags are raised (does not block response)
+
+
+  MODULE: pipeline.py  (orchestrator)
+  ─────────────────────────────────────────────────────
+  ingest(user_id) → { status, chunks_indexed }
+  query(question, user_id, session_id, force_mode) → {
+      answer, sources, mode, metrics, guardrail_flags?
+  }
+
+  force_mode: "rag" | "web" | None  (override intent detection)
+
+
+--------------------------------------------------------------------------------
+AI AGENT DETAILS
+--------------------------------------------------------------------------------
+
+  OCR NODE AGENT  (Backend/Agents/ocr_node_agent.py)
+  ─────────────────────────────────────────────────────
+  Model:       gemini-2.5-flash
+  Temperature: 0.2  (low — for precise structured output)
+  Role:        Information architect — converts raw text into hierarchical JSON
+  Framework:   LangChain (ChatGoogleGenerativeAI + ChatPromptTemplate)
+  Output:      Strict JSON with nodes array (id, label, description, parentId)
+  Chain:       prompt | llm  (simple linear chain, no memory)
+
+  RAG GENERATION AGENT  (Backend/RAG/generation.py)
+  ─────────────────────────────────────────────────────
+  Model:       gemini-2.5-flash
+  Temperature: 0.3  (low — grounded, factual answers)
+  Role:        Study assistant — answers from personal notes or web search
+  Framework:   LangChain (ChatGoogleGenerativeAI + ChatPromptTemplate)
+  Modes:       RAG (context from Qdrant) | Web (context from DuckDuckGo)
+  Constraint:  "Answer using ONLY the provided context" (RAG mode)
+  Intent:      Also used for query intent classification (NOTES vs EXTERNAL)
+
+  CHATBOT  (Backend/Agents/chatbot.py)  ← fallback only
+  ─────────────────────────────────────────────────────
+  Model:       gemini-2.5-flash
+  Temperature: 0.7  (higher — more conversational)
+  Role:        General-purpose helpful assistant (used when Qdrant unavailable)
+  Framework:   LangChain + RunnableWithMessageHistory
+  Memory:      InMemoryChatMessageHistory per session_id
+               ⚠ History is lost when server restarts (not persisted to DB)
+
+
+--------------------------------------------------------------------------------
+CONFIGURATION  (Config/config.properties)
+--------------------------------------------------------------------------------
+
+  Format: key=value (lines starting with # are comments)
+  Loaded at startup → injected into os.environ
+
+  Existing keys:
+    GEMINI_API_KEY          ← Required. Google Gemini API key.
+    LANGCHAIN_API_KEY       ← Optional. LangSmith tracing.
+    LANGCHAIN_TRACING_V2    ← Hard-set to "false" in code to prevent 403 errors.
+    LANGCHAIN_PROJECT       ← LangSmith project name.
+
+  RAG keys (added 2026-06-21):
+    QDRANT_URL              ← Qdrant server URL  (default: http://localhost:6333)
+    QDRANT_API_KEY          ← Qdrant API key     (leave blank for local Docker)
+    QDRANT_COLLECTION       ← Collection name    (default: studynotes_nodes)
+    EMBEDDING_MODEL         ← HuggingFace model  (default: all-MiniLM-L6-v2)
+    EMBEDDING_DIM           ← Vector dimension   (default: 384)
+    CHUNK_SIZE              ← Max chars per chunk (default: 300)
+    CHUNK_OVERLAP           ← Overlap chars       (default: 50)
+    TOP_K                   ← Candidates to fetch (default: 5)
+    HYBRID_ALPHA            ← Dense weight in RRF (default: 0.6)
+    RERANK_MODEL            ← Cross-encoder model (default: ms-marco-MiniLM-L-6-v2)
+    RERANK_TOP_N            ← Final results count (default: 3)
+    GEMINI_MODEL            ← LLM model string   (default: gemini-2.5-flash)
+    LLM_TEMPERATURE         ← Generation temp    (default: 0.3)
+    LLM_MAX_TOKENS          ← Max output tokens  (default: 2048)
+    WEB_SEARCH_PROVIDER     ← "duckduckgo"        (only option currently)
+    WEB_SEARCH_MAX_RESULTS  ← Web results count  (default: 5)
+    CACHE_TTL               ← Cache TTL seconds  (default: 300)
+    CACHE_MAX_SIZE          ← Max cached entries (default: 100)
+
+
+--------------------------------------------------------------------------------
+MINDFORGE INTEGRATION
+--------------------------------------------------------------------------------
+
+  MindForge/ appears to be a secondary frontend (likely React/Vite-based).
+  After every OCR processing job, the output JSON is copied to:
+    MindForge/public/ocr_nodes.json
+
+  This acts as a file-based bridge so MindForge can auto-import the latest
+  OCR result without an additional API call. The MindForge frontend itself
+  does not appear to be fully built yet (only the public/ocr_nodes.json exists).
+
+
+--------------------------------------------------------------------------------
+SETUP & RUNNING
+--------------------------------------------------------------------------------
+
+  Prerequisites:
+    1. uv installed (https://docs.astral.sh/uv/)
+    2. Docker installed (for Qdrant)
+    3. GEMINI_API_KEY set in Config/config.properties
+
+  Step 1 — Start Qdrant:
+    docker run -p 6333:6333 qdrant/qdrant
+
+  Step 2 — Install dependencies:
+    uv sync
+    # or: uv add flask flask_cors langchain_google_genai qdrant-client
+    #           sentence-transformers rank-bm25 duckduckgo-search langchain-core
+
+  Step 3 — Start the server:
+    python Backend/app.py
+
+  Step 4 — Ingest your mind map (after logging in and saving nodes):
+    POST http://localhost:5000/api/rag/ingest
+    (call this once after first login, and again whenever you update your map)
+
+  Step 5 — Chat:
+    POST http://localhost:5000/generate-text
+    Body: { "text": "What did I study about machine learning?", "session_id": "s1" }
+    → Automatically uses RAG for notes questions, DuckDuckGo for external ones
+
+
+--------------------------------------------------------------------------------
+KNOWN ISSUES / SECURITY GAPS
+--------------------------------------------------------------------------------
+
+  1. PLAINTEXT PASSWORDS
+     Passwords are stored and compared as raw strings in SQLite.
+     Fix: Use bcrypt or argon2 to hash passwords before storing.
+
+  2. HARDCODED SECRET KEY
+     app.secret_key = 'super_secret_key_for_node_tree'  (app.py line 21)
+     Fix: Load from Config/config.properties or environment variable.
+
+  3. CHATBOT HISTORY NOT PERSISTED
+     Conversation history lives in a Python dict (history_store in chatbot.py).
+     A server restart wipes all chat sessions.
+     Fix: Store history in SQLite or Redis.
+
+  4. NO FILE TYPE VALIDATION ON UPLOAD
+     The /upload endpoint saves any file without validating MIME type beyond
+     the filename extension check inside OCR.py.
+     Fix: Validate MIME type server-side before saving.
+
+  5. ADMIN SEED PASSWORD
+     Default admin password is 'admin' — seeded in database.py init.
+     Fix: Require password change on first login or use env-injected credentials.
+
+  6. RAG CACHE CLEARED ON ANY INVALIDATION
+     cache.invalidate_user_cache() clears the entire in-memory cache, not just
+     the target user's entries (SHA-256 keys are not reversible for filtering).
+     Fix: Use a prefixed key structure with a secondary user→key index.
+
+  7. BM25 CORPUS LOADED FROM QDRANT ON EVERY QUERY
+     get_all_user_chunks() fetches all user chunks from Qdrant on each query
+     to build the BM25 index in memory. For users with large maps this adds
+     latency. Fix: Cache the BM25 index in memory keyed by user_id + version.
+
+  8. QDRANT NOT AUTHENTICATED BY DEFAULT
+     Local Docker Qdrant has no auth. Set QDRANT_API_KEY for cloud deployments.
+
+
+================================================================================
+END OF ARCHITECTURE NOTES
+================================================================================

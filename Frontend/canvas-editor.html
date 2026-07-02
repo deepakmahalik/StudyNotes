@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Editor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117; --bg2: #1e2130; --bg3: #1a1d2e;
+      --border: #2d3148; --border2: #3d4163;
+      --text: #e2e8f0; --text2: #cbd5e1; --text3: #64748b;
+      --accent: #38bdf8; --accent2: #a78bfa;
+      --purple: #7c3aed; --red: #ef4444;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .tb-btn {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .tb-btn:hover { background: var(--border2); color: var(--text); }
+    .tb-btn.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .tb-btn.primary:hover { background: #6d28d9; }
+    .tb-btn.success { background: rgba(52,211,153,0.15); border-color: #34d399; color: #34d399; }
+    .tb-btn.success:hover { background: rgba(52,211,153,0.25); }
+    .tb-btn.danger { background: rgba(239,68,68,0.12); border-color: var(--red); color: var(--red); }
+    .tb-btn.danger:hover { background: rgba(239,68,68,0.22); }
+
+    .tb-sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+    .tb-label { font-size: 11px; color: var(--text3); }
+
+    #node-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent2);
+      margin-left: auto;
+      padding: 4px 10px;
+      background: rgba(167,139,250,0.08);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 6px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Canvas scroll area ── */
+    #canvas-scroll {
+      flex: 1;
+      overflow: auto;
+      background: #090d16;
+      position: relative;
+      cursor: default;
+    }
+
+    #canvas {
+      position: relative;
+      width: 3000px;
+      height: 2000px;
+      background-image:
+        linear-gradient(rgba(45,49,72,0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45,49,72,0.4) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* ── Canvas elements ── */
+    .canvas-el {
+      position: absolute;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      overflow: hidden;
+      min-width: 140px;
+      min-height: 70px;
+    }
+    .canvas-el.selected {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px rgba(124,58,237,0.35), 0 4px 16px rgba(0,0,0,0.6);
+    }
+
+    /* Element drag header */
+    .el-hdr {
+      height: 26px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      cursor: grab;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .el-hdr:active { cursor: grabbing; }
+    .el-type { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; flex: 1; }
+    .el-hdr-btns { display: flex; gap: 3px; }
+    .el-hdr-btn {
+      width: 18px; height: 18px;
+      background: none; border: none;
+      color: var(--text3); cursor: pointer;
+      font-size: 13px; line-height: 1;
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
+    .el-hdr-btn:hover { background: rgba(239,68,68,0.18); color: var(--red); }
+    .el-hdr-btn.dup:hover { background: rgba(56,189,248,0.15); color: var(--accent); }
+
+    /* Resize handle */
+    .el-resize {
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 16px; height: 16px;
+      cursor: nwse-resize;
+      opacity: 0.35;
+      z-index: 10;
+    }
+    .el-resize:hover, .canvas-el.selected .el-resize { opacity: 0.9; }
+    .el-resize svg { display: block; }
+
+    /* ── Text element ── */
+    .el-text-content {
+      padding: 8px 10px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--text);
+      outline: none;
+      overflow: auto;
+      user-select: text;
+      height: calc(100% - 26px);
+      cursor: text;
+    }
+    .el-text-content:empty::before {
+      content: 'Click to type…';
+      color: var(--text3);
+      pointer-events: none;
+      font-style: italic;
+    }
+
+    /* Text mini toolbar */
+    .text-fmt-bar {
+      display: none;
+      position: absolute;
+      top: 28px; left: 0; right: 0;
+      background: #12151f;
+      border-bottom: 1px solid var(--border);
+      padding: 3px 6px;
+      gap: 2px;
+      flex-wrap: wrap;
+      z-index: 5;
+    }
+    .canvas-el.text-editing .text-fmt-bar { display: flex; }
+    .canvas-el.text-editing .el-text-content { height: calc(100% - 56px); }
+    .fmt-btn {
+      background: none; border: none;
+      color: var(--text3); cursor: pointer;
+      font-size: 11px; padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .fmt-btn:hover { background: var(--border); color: var(--text); }
+
+    /* ── Table element ── */
+    .el-table-wrap {
+      overflow: auto;
+      height: calc(100% - 26px - 30px);
+    }
+    .canvas-table {
+      border-collapse: collapse;
+      font-size: 12px;
+      width: 100%;
+      min-width: 100%;
+    }
+    .canvas-table th, .canvas-table td {
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      min-width: 80px;
+      outline: none;
+      color: var(--text);
+      vertical-align: top;
+      user-select: text;
+      cursor: text;
+    }
+    .canvas-table th {
+      background: var(--bg3);
+      font-weight: 600;
+      color: var(--accent2);
+      font-size: 11px;
+    }
+    .canvas-table td:focus, .canvas-table th:focus {
+      background: rgba(124,58,237,0.08);
+    }
+    .table-ctrl-bar {
+      display: flex;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--bg3);
+      border-top: 1px solid var(--border);
+      height: 30px;
+      align-items: center;
+    }
+    .tc-btn {
+      background: var(--bg2);
+      color: var(--text3);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tc-btn:hover { background: var(--border); color: var(--text); }
+    .tc-btn.tc-del { color: #f87171; border-color: rgba(248,113,113,0.3); }
+    .tc-btn.tc-del:hover { background: rgba(239,68,68,0.15); }
+
+    /* ── Image element ── */
+    .el-img-content {
+      height: calc(100% - 26px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .el-img-content img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      pointer-events: none;
+      display: block;
+    }
+    .img-drop-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text3);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+    }
+    .img-drop-hint .icon { font-size: 28px; opacity: 0.35; }
+    .img-file-input {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    /* ── Status bar ── */
+    #statusbar {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 3px 12px;
+      font-size: 10px;
+      color: var(--text3);
+      font-family: 'Courier New', monospace;
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    #statusbar span { white-space: nowrap; }
+    .status-accent { color: var(--accent2); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(124,58,237,0.92);
+      color: #fff;
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Add Table dialog ── */
+    #table-dialog {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    #table-dialog.open { display: flex; }
+    .dialog-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 24px;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .dialog-box h3 { font-size: 14px; color: var(--text2); }
+    .dialog-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dialog-row label { font-size: 12px; color: var(--text3); }
+    .dialog-row input[type=number] {
+      width: 64px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+    }
+    .dialog-row input:focus { border-color: var(--accent2); }
+    .dialog-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <span class="tb-label">Add:</span>
+  <button class="tb-btn" onclick="addTextElement()">✏ Text</button>
+  <button class="tb-btn" onclick="openTableDialog()">⊞ Table</button>
+  <button class="tb-btn" onclick="addImageElement()">🖼 Image</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="zoomIn()">＋</button>
+  <button class="tb-btn" onclick="zoomOut()">－</button>
+  <button class="tb-btn" onclick="resetZoom()">1:1</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="deleteSelected()" title="Delete selected (Del)">🗑 Delete</button>
+  <button class="tb-btn danger" onclick="clearAll()">✕ Clear All</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn success" onclick="saveCanvas()">💾 Save  <small style="opacity:.7">Ctrl+S</small></button>
+  <button class="tb-btn" onclick="closeCanvas()">✕ Close</button>
+  <div id="node-name">Canvas</div>
+</div>
+
+<!-- Canvas scroll area -->
+<div id="canvas-scroll">
+  <div id="canvas" onclick="canvasClick(event)"></div>
+</div>
+
+<!-- Status bar -->
+<div id="statusbar">
+  <span id="stat-count">0 elements</span>
+  <span id="stat-pos"></span>
+  <span id="stat-zoom" class="status-accent">100%</span>
+  <span style="margin-left:auto;opacity:.6">Ctrl+S to save · Paste image anywhere · Del to delete</span>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Add Table dialog -->
+<div id="table-dialog">
+  <div class="dialog-box">
+    <h3>⊞ Insert Table</h3>
+    <div class="dialog-row">
+      <label>Rows</label>
+      <input type="number" id="tbl-rows" value="3" min="1" max="20">
+    </div>
+    <div class="dialog-row">
+      <label>Columns</label>
+      <input type="number" id="tbl-cols" value="3" min="1" max="10">
+    </div>
+    <div class="dialog-btns">
+      <button class="tb-btn" onclick="closeTableDialog()">Cancel</button>
+      <button class="tb-btn primary" onclick="confirmAddTable()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let elements   = [];
+let selectedId = null;
+let nodeId     = null;
+let nodeName   = 'Canvas';
+let zoom       = 1.0;
+
+// Drag / resize state
+let drag   = null; // { id, startX, startY, origLeft, origTop }
+let resize = null; // { id, startX, startY, origW, origH }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function uid() { return 'e' + Math.random().toString(36).substr(2, 9); }
+
+function elData(id) { return elements.find(e => e.id === id); }
+
+function elDom(id) { return document.getElementById(id); }
+
+function canvasXY(clientX, clientY) {
+  const scroll = document.getElementById('canvas-scroll');
+  const rect   = scroll.getBoundingClientRect();
+  return {
+    x: Math.round((clientX - rect.left + scroll.scrollLeft) / zoom),
+    y: Math.round((clientY - rect.top  + scroll.scrollTop)  / zoom),
+  };
+}
+
+function applyZoom() {
+  document.getElementById('canvas').style.transform       = `scale(${zoom})`;
+  document.getElementById('canvas').style.transformOrigin = '0 0';
+  document.getElementById('stat-zoom').textContent = Math.round(zoom * 100) + '%';
+}
+function zoomIn()    { zoom = Math.min(2.0, zoom + 0.1); applyZoom(); }
+function zoomOut()   { zoom = Math.max(0.3, zoom - 0.1); applyZoom(); }
+function resetZoom() { zoom = 1.0; applyZoom(); }
+
+// ── Selection ────────────────────────────────────────────────────────────────
+function select(id) {
+  if (selectedId) {
+    const prev = elDom(selectedId);
+    if (prev) prev.classList.remove('selected');
+  }
+  selectedId = id;
+  if (id) {
+    const el = elDom(id);
+    if (el) el.classList.add('selected');
+  }
+  updateStatus();
+}
+
+function canvasClick(e) {
+  if (e.target === document.getElementById('canvas')) select(null);
+}
+
+// ── Add elements ─────────────────────────────────────────────────────────────
+function addTextElement(x, y) {
+  const scroll = document.getElementById('canvas-scroll');
+  const pos = { x: x ?? Math.round(100 + scroll.scrollLeft / zoom),
+                y: y ?? Math.round(80  + scroll.scrollTop  / zoom) };
+  const el = { id: uid(), type: 'text', x: pos.x, y: pos.y, w: 280, h: 180, content: '' };
+  elements.push(el);
+  renderEl(el);
+  select(el.id);
+  // Auto-enter edit mode
+  setTimeout(() => {
+    const dom = elDom(el.id);
+    if (dom) {
+      dom.classList.add('text-editing');
+      dom.querySelector('.el-text-content').focus();
+    }
+  }, 50);
+}
+
+function openTableDialog() { document.getElementById('table-dialog').classList.add('open'); }
+function closeTableDialog() { document.getElementById('table-dialog').classList.remove('open'); }
+
+function confirmAddTable() {
+  const rows = parseInt(document.getElementById('tbl-rows').value) || 3;
+  const cols = parseInt(document.getElementById('tbl-cols').value) || 3;
+  closeTableDialog();
+  addTableElement(rows, cols);
+}
+
+function addTableElement(rows = 3, cols = 3, x, y) {
+  const scroll = document.getElementById('canvas-scroll');
+  const pos = { x: x ?? Math.round(100 + scroll.scrollLeft / zoom),
+                y: y ?? Math.round(80  + scroll.scrollTop  / zoom) };
+  const headers = Array.from({ length: cols }, (_, i) => `Column ${i + 1}`);
+  const rowData = Array.from({ length: rows }, () => Array(cols).fill(''));
+  const el = { id: uid(), type: 'table', x: pos.x, y: pos.y, w: cols * 100 + 20, h: rows * 32 + 66, headers, rows: rowData };
+  elements.push(el);
+  renderEl(el);
+  select(el.id);
+}
+
+function addImageElement(src, x, y) {
+  const scroll = document.getElementById('canvas-scroll');
+  const pos = { x: x ?? Math.round(100 + scroll.scrollLeft / zoom),
+                y: y ?? Math.round(80  + scroll.scrollTop  / zoom) };
+  const el = { id: uid(), type: 'image', x: pos.x, y: pos.y, w: 320, h: 240, src: src || '' };
+  elements.push(el);
+  renderEl(el);
+  select(el.id);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderEl(el) {
+  const existing = elDom(el.id);
+  if (existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.id        = el.id;
+  div.className = 'canvas-el el-' + el.type + (el.id === selectedId ? ' selected' : '');
+  div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;`;
+
+  // Header (drag handle)
+  const hdr = document.createElement('div');
+  hdr.className = 'el-hdr';
+  hdr.innerHTML = `<span class="el-type">${el.type === 'image' ? '🖼 image' : el.type === 'table' ? '⊞ table' : '✏ text'}</span>
+    <div class="el-hdr-btns">
+      <button class="el-hdr-btn dup" onclick="dupElement('${el.id}')" title="Duplicate">⧉</button>
+      <button class="el-hdr-btn"    onclick="deleteElement('${el.id}')" title="Delete">×</button>
+    </div>`;
+  hdr.addEventListener('mousedown', e => startDrag(e, el.id));
+  div.appendChild(hdr);
+
+  if (el.type === 'text') {
+    // Mini format bar
+    const fmtBar = document.createElement('div');
+    fmtBar.className = 'text-fmt-bar';
+    fmtBar.innerHTML = `
+      <button class="fmt-btn" onmousedown="e=>e.preventDefault()" onclick="execFmt('bold')"><b>B</b></button>
+      <button class="fmt-btn" onclick="execFmt('italic')"><i>I</i></button>
+      <button class="fmt-btn" onclick="execFmt('underline')"><u>U</u></button>
+      <button class="fmt-btn" onclick="execFmt('strikeThrough')"><s>S</s></button>
+      <span style="width:1px;background:var(--border);margin:0 2px;align-self:stretch"></span>
+      <button class="fmt-btn" onclick="execFmt('insertUnorderedList')">• ≡</button>
+      <button class="fmt-btn" onclick="execFmt('insertOrderedList')">1 ≡</button>
+      <span style="width:1px;background:var(--border);margin:0 2px;align-self:stretch"></span>
+      <button class="fmt-btn" onclick="execFmt('removeFormat')">Tx</button>`;
+    fmtBar.addEventListener('mousedown', e => e.stopPropagation());
+    div.appendChild(fmtBar);
+
+    const content = document.createElement('div');
+    content.className    = 'el-text-content';
+    content.contentEditable = 'true';
+    content.innerHTML    = el.content || '';
+    content.addEventListener('mousedown', e => e.stopPropagation());
+    content.addEventListener('focus',  () => { div.classList.add('text-editing'); });
+    content.addEventListener('blur',   () => { div.classList.remove('text-editing'); syncTextContent(el.id); });
+    content.addEventListener('input',  () => syncTextContent(el.id));
+    div.appendChild(content);
+
+  } else if (el.type === 'table') {
+    const wrap = document.createElement('div');
+    wrap.className = 'el-table-wrap';
+
+    const table = document.createElement('table');
+    table.className = 'canvas-table';
+
+    // thead
+    const thead = document.createElement('thead');
+    const hdrRow = document.createElement('tr');
+    el.headers.forEach((h, ci) => {
+      const th = document.createElement('th');
+      th.contentEditable = 'true';
+      th.textContent = h;
+      th.addEventListener('mousedown', e => e.stopPropagation());
+      th.addEventListener('input', () => { el.headers[ci] = th.textContent; });
+      hdrRow.appendChild(th);
+    });
+    thead.appendChild(hdrRow);
+    table.appendChild(thead);
+
+    // tbody
+    const tbody = document.createElement('tbody');
+    el.rows.forEach((row, ri) => {
+      const tr = document.createElement('tr');
+      row.forEach((cell, ci) => {
+        const td = document.createElement('td');
+        td.contentEditable = 'true';
+        td.textContent = cell;
+        td.addEventListener('mousedown', e => e.stopPropagation());
+        td.addEventListener('input', () => { el.rows[ri][ci] = td.textContent; });
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    div.appendChild(wrap);
+
+    // Table controls bar
+    const ctrlBar = document.createElement('div');
+    ctrlBar.className = 'table-ctrl-bar';
+    ctrlBar.innerHTML = `
+      <button class="tc-btn"     onclick="tblAddRow('${el.id}')">+ Row</button>
+      <button class="tc-btn"     onclick="tblAddCol('${el.id}')">+ Col</button>
+      <button class="tc-btn tc-del" onclick="tblDelRow('${el.id}')">− Row</button>
+      <button class="tc-btn tc-del" onclick="tblDelCol('${el.id}')">− Col</button>`;
+    ctrlBar.addEventListener('mousedown', e => e.stopPropagation());
+    div.appendChild(ctrlBar);
+
+  } else if (el.type === 'image') {
+    const content = document.createElement('div');
+    content.className = 'el-img-content';
+
+    if (el.src) {
+      const img = document.createElement('img');
+      img.src = el.src;
+      content.appendChild(img);
+    } else {
+      content.innerHTML = `
+        <div class="img-drop-hint">
+          <div class="icon">🖼</div>
+          <div>Paste (Ctrl+V) or click to browse</div>
+        </div>
+        <input type="file" class="img-file-input" accept="image/*">`;
+      const fileInput = content.querySelector('.img-file-input');
+      fileInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => { el.src = ev.target.result; renderEl(el); select(el.id); };
+        reader.readAsDataURL(file);
+      });
+    }
+    content.addEventListener('mousedown', e => e.stopPropagation());
+    div.appendChild(content);
+  }
+
+  // Resize handle
+  const resizeHandle = document.createElement('div');
+  resizeHandle.className = 'el-resize';
+  resizeHandle.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M13 1L1 13" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/><path d="M13 7L7 13" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  resizeHandle.addEventListener('mousedown', e => startResize(e, el.id));
+  div.appendChild(resizeHandle);
+
+  div.addEventListener('mousedown', () => select(el.id));
+
+  document.getElementById('canvas').appendChild(div);
+  updateStatus();
+}
+
+function syncTextContent(id) {
+  const el  = elData(id);
+  const dom = elDom(id);
+  if (!el || !dom) return;
+  const content = dom.querySelector('.el-text-content');
+  if (content) el.content = content.innerHTML;
+}
+
+function execFmt(cmd) { document.execCommand(cmd, false, null); }
+
+// ── Drag ─────────────────────────────────────────────────────────────────────
+function startDrag(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  select(id);
+  const dom = elDom(id);
+  drag = {
+    id,
+    startX:   e.clientX,
+    startY:   e.clientY,
+    origLeft: parseInt(dom.style.left),
+    origTop:  parseInt(dom.style.top),
+  };
+}
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+function startResize(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  select(id);
+  const dom = elDom(id);
+  resize = {
+    id,
+    startX: e.clientX,
+    startY: e.clientY,
+    origW:  parseInt(dom.style.width),
+    origH:  parseInt(dom.style.height),
+  };
+}
+
+document.addEventListener('mousemove', e => {
+  if (drag) {
+    const dx      = (e.clientX - drag.startX) / zoom;
+    const dy      = (e.clientY - drag.startY) / zoom;
+    const newLeft = Math.max(0, Math.round(drag.origLeft + dx));
+    const newTop  = Math.max(0, Math.round(drag.origTop  + dy));
+    const dom     = elDom(drag.id);
+    if (dom) { dom.style.left = newLeft + 'px'; dom.style.top = newTop + 'px'; }
+    const el = elData(drag.id);
+    if (el)  { el.x = newLeft; el.y = newTop; }
+    updateStatus();
+  }
+  if (resize) {
+    const dx   = (e.clientX - resize.startX) / zoom;
+    const dy   = (e.clientY - resize.startY) / zoom;
+    const newW = Math.max(140, Math.round(resize.origW + dx));
+    const newH = Math.max(70,  Math.round(resize.origH + dy));
+    const dom  = elDom(resize.id);
+    if (dom) { dom.style.width = newW + 'px'; dom.style.height = newH + 'px'; }
+    const el = elData(resize.id);
+    if (el)  { el.w = newW; el.h = newH; }
+    updateStatus();
+  }
+});
+
+document.addEventListener('mouseup', () => { drag = null; resize = null; });
+
+// ── Delete & Duplicate ────────────────────────────────────────────────────────
+function deleteElement(id) {
+  elements = elements.filter(e => e.id !== id);
+  const dom = elDom(id);
+  if (dom) dom.remove();
+  if (selectedId === id) selectedId = null;
+  updateStatus();
+}
+
+function deleteSelected() { if (selectedId) deleteElement(selectedId); }
+
+function dupElement(id) {
+  const el = elData(id);
+  if (!el) return;
+  const copy = JSON.parse(JSON.stringify(el));
+  copy.id = uid();
+  copy.x += 24; copy.y += 24;
+  elements.push(copy);
+  renderEl(copy);
+  select(copy.id);
+}
+
+// ── Table ops ─────────────────────────────────────────────────────────────────
+function tblAddRow(id) {
+  const el = elData(id);
+  if (!el) return;
+  el.rows.push(Array(el.headers.length).fill(''));
+  renderEl(el); select(id);
+}
+function tblDelRow(id) {
+  const el = elData(id);
+  if (!el || el.rows.length <= 1) return;
+  el.rows.pop();
+  renderEl(el); select(id);
+}
+function tblAddCol(id) {
+  const el = elData(id);
+  if (!el) return;
+  el.headers.push('Column ' + (el.headers.length + 1));
+  el.rows.forEach(r => r.push(''));
+  renderEl(el); select(id);
+}
+function tblDelCol(id) {
+  const el = elData(id);
+  if (!el || el.headers.length <= 1) return;
+  el.headers.pop();
+  el.rows.forEach(r => r.pop());
+  renderEl(el); select(id);
+}
+
+// ── Image paste ───────────────────────────────────────────────────────────────
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items || [];
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const blob   = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const scroll = document.getElementById('canvas-scroll');
+        addImageElement(ev.target.result,
+          Math.round(80 + scroll.scrollLeft / zoom),
+          Math.round(80 + scroll.scrollTop  / zoom));
+      };
+      reader.readAsDataURL(blob);
+      e.preventDefault();
+      break;
+    }
+  }
+});
+
+// ── Clear ─────────────────────────────────────────────────────────────────────
+function clearAll() {
+  if (!elements.length) return;
+  if (!confirm('Remove all elements from this canvas?')) return;
+  elements = [];
+  document.getElementById('canvas').innerHTML = '';
+  selectedId = null;
+  updateStatus();
+}
+
+// ── Save / Load ───────────────────────────────────────────────────────────────
+function saveCanvas() {
+  // Sync all text / table content from DOM before serialising
+  elements.forEach(el => {
+    const dom = elDom(el.id);
+    if (!dom) return;
+    if (el.type === 'text') {
+      const c = dom.querySelector('.el-text-content');
+      if (c) el.content = c.innerHTML;
+    } else if (el.type === 'table') {
+      dom.querySelectorAll('th').forEach((th, i) => {
+        if (i < el.headers.length) el.headers[i] = th.textContent;
+      });
+      dom.querySelectorAll('tbody tr').forEach((tr, ri) => {
+        tr.querySelectorAll('td').forEach((td, ci) => {
+          if (ri < el.rows.length && ci < el.rows[ri].length) el.rows[ri][ci] = td.textContent;
+        });
+      });
+    }
+  });
+
+  const data = { version: 1, elements: JSON.parse(JSON.stringify(elements)) };
+  window.parent.postMessage({ type: 'CANVAS_SAVE', nodeId, data }, '*');
+  showToast('Saved!');
+}
+
+function loadFromData(data) {
+  if (!data?.elements) return;
+  elements = JSON.parse(JSON.stringify(data.elements));
+  document.getElementById('canvas').innerHTML = '';
+  elements.forEach(el => renderEl(el));
+  updateStatus();
+}
+
+function closeCanvas() {
+  window.parent.postMessage({ type: 'CANVAS_CLOSE' }, '*');
+}
+
+// ── Status & Toast ────────────────────────────────────────────────────────────
+function updateStatus() {
+  const el = elData(selectedId);
+  document.getElementById('stat-count').textContent =
+    elements.length + ' element' + (elements.length !== 1 ? 's' : '');
+  document.getElementById('stat-pos').textContent =
+    el ? `x:${el.x} y:${el.y}  ${el.w}×${el.h}` : '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCanvas(); return; }
+
+  // Delete selected element — only when not editing text
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+    const active = document.activeElement;
+    if (!active || (!active.isContentEditable && active.tagName !== 'INPUT')) {
+      deleteSelected();
+    }
+  }
+
+  // Arrow-key nudge
+  if (selectedId && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    const el = elData(selectedId);
+    if (!el) return;
+    const step = e.shiftKey ? 10 : 1;
+    if (e.key === 'ArrowUp')    el.y = Math.max(0, el.y - step);
+    if (e.key === 'ArrowDown')  el.y += step;
+    if (e.key === 'ArrowLeft')  el.x = Math.max(0, el.x - step);
+    if (e.key === 'ArrowRight') el.x += step;
+    const dom = elDom(selectedId);
+    if (dom) { dom.style.left = el.x + 'px'; dom.style.top = el.y + 'px'; }
+    updateStatus();
+    e.preventDefault();
+  }
+});
+
+// ── Message from parent ───────────────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (e.data?.type === 'CANVAS_LOAD') {
+    nodeId   = e.data.nodeId;
+    nodeName = e.data.nodeName || 'Canvas';
+    document.getElementById('node-name').textContent = nodeName;
+    if (e.data.data) loadFromData(e.data.data);
+  }
+});
+
+// Init
+updateStatus();
+applyZoom();
+</script>
+</body>
+</html>

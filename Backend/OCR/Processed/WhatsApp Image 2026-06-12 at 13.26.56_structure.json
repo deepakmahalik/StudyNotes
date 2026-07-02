@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Channels in Market Analysis",
+      "description": "Understanding how market price action is contained within various channel structures.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "General Channel Concept",
+      "description": "The market is often in some kind of channel, sometimes simultaneously in several across different time frames, defined by price action confined between a pair of lines.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2",
+      "label": "Trend Channel",
+      "description": "A diagonal channel contained by a trend line and a trend channel line.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2_1",
+      "label": "Bear Channel",
+      "description": "Has a descending trend line above (bear trend line) and a descending trend channel line below (bear trend channel line).",
+      "parentId": "n2"
+    },
+    {
+      "id": "n3",
+      "label": "Trading Range",
+      "description": "Contained between a horizontal support line below and a resistance line above.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3_1",
+      "label": "Weak Trend Channel",
+      "description": "A trading range that is slightly rising or falling.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n4",
+      "label": "Triangles",
+      "description": "Areas of price action contained between two lines, exhibiting trending behavior (higher highs/lower lows) in addition to trading range behavior.",
+      "parentId": "root"
+    },
+    {
+      "id": "n4_1",
+      "label": "Expanding Triangle",
+      "description": "Contained between two diverging lines, both technically trend channel lines.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_1_1",
+      "label": "Lower Line (Expanding Triangle)",
+      "description": "Across lower lows, below a bear trend, thus a trend channel line.",
+      "parentId": "n4_1"
+    },
+    {
+      "id": "n4_1_2",
+      "label": "Upper Line (Expanding Triangle)",
+      "description": "Across higher highs, thus a bull trend channel line.",
+      "parentId": "n4_1"
+    },
+    {
+      "id": "n4_2",
+      "label": "Contracting Triangle",
+      "description": "Contained between two trend lines, indicating both a small bear trend (lower highs) and a bull trend (higher lows).",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_3",
+      "label": "Ascending Triangle",
+      "description": "Has a resistance line above and a bull trend line below.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_4",
+      "label": "Descending Triangle",
+      "description": "Has a support line below and a bear trend line above.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n5",
+      "label": "Wedge",
+      "description": "A variant of a triangle; an ascending or descending channel where the trend line and trend channel line converge.",
+      "parentId": "root"
+    },
+    {
+      "id": "n6",
+      "label": "ABC Correction",
+      "description": "A type of channel that occurs during corrections in trends.",
+      "parentId": "root"
+    },
+    {
+      "id": "n6_1",
+      "label": "In Bull Trend",
+      "description": "Appears as a small bear channel.",
+      "parentId": "n6"
+    },
+    {
+      "id": "n6_2",
+      "label": "In Bear Trend",
+      "description": "Appears as a small bull channel.",
+      "parentId": "n6"
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RAG Control Panel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; padding: 40px; }
+    h1 { font-size: 1.6rem; margin-bottom: 6px; color: #a78bfa; }
+    .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 32px; }
+    .card { background: #1e2130; border: 1px solid #2d3148; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #cbd5e1; }
+    button {
+      background: #7c3aed; color: white; border: none; padding: 10px 22px;
+      border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background: #6d28d9; }
+    button:disabled { background: #374151; cursor: not-allowed; }
+    .status-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600; margin-left: 12px;
+    }
+    .badge-ok   { background: #065f46; color: #6ee7b7; }
+    .badge-warn { background: #78350f; color: #fcd34d; }
+    .badge-err  { background: #7f1d1d; color: #fca5a5; }
+    #result, #stats-result {
+      margin-top: 16px; background: #0f1117; border-radius: 8px;
+      padding: 14px; font-family: monospace; font-size: 0.82rem;
+      color: #a3e635; white-space: pre-wrap; min-height: 48px;
+      border: 1px solid #1e293b;
+    }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 4px; }
+    .metric { background: #0f1117; border-radius: 8px; padding: 14px; border: 1px solid #1e293b; }
+    .metric .val { font-size: 1.5rem; font-weight: 700; color: #a78bfa; }
+    .metric .lbl { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+    a { color: #818cf8; text-decoration: none; font-size: 0.85rem; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>RAG Control Panel</h1>
+  <p class="sub">User ID: {{ user_id }} &nbsp;|&nbsp; <a href="/admin">← Back to Admin</a> &nbsp;|&nbsp; <a href="/app">Go to App</a></p>
+
+  <div class="card">
+    <h2>Index Mind Map Nodes into Qdrant</h2>
+    <p style="font-size:0.85rem;color:#64748b;margin-bottom:16px;">
+      <b>Incremental</b> — only indexes new/changed nodes (fast). &nbsp;
+      <b>Full</b> — wipes existing index and rebuilds from scratch (use after code changes).
+    </p>
+    <button id="ingest-btn" onclick="runIngest(false)">▶ Incremental Ingest</button>
+    <button id="full-ingest-btn" onclick="runIngest(true)" style="background:#b45309;margin-left:10px;">⚠ Full Re-Ingest</button>
+    <div id="ingest-metrics" class="metric-grid" style="margin-top:16px;display:none;"></div>
+    <div id="result"></div>
+  </div>
+
+  <div class="card">
+    <h2>RAG Pipeline Status & Metrics</h2>
+    <button onclick="loadStats()">↻ Refresh Stats</button>
+    <div id="metrics-grid" class="metric-grid" style="margin-top:16px;"></div>
+    <div id="stats-result"></div>
+  </div>
+
+  <script>
+    async function runIngest(full) {
+      const btn  = document.getElementById(full ? 'full-ingest-btn' : 'ingest-btn');
+      const btn2 = document.getElementById(full ? 'ingest-btn' : 'full-ingest-btn');
+      const out  = document.getElementById('result');
+      const grid = document.getElementById('ingest-metrics');
+
+      btn.disabled = true;
+      btn2.disabled = true;
+      btn.textContent = '⏳ Running...';
+      out.textContent = '';
+      grid.style.display = 'none';
+      grid.innerHTML = '';
+
+      try {
+        const r = await fetch('/api/rag/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ full: !!full })
+        });
+        const data = await r.json();
+
+        if (data.status === 'ok' || data.status === 'empty') {
+          const metrics = [
+            { val: data.chunks_indexed ?? '—',  lbl: 'Chunks Indexed',  color: '#a78bfa' },
+            { val: data.added     ?? '—',        lbl: 'Nodes Added',     color: '#6ee7b7' },
+            { val: data.updated   ?? '—',        lbl: 'Nodes Updated',   color: '#fbbf24' },
+            { val: data.deleted   ?? '—',        lbl: 'Nodes Deleted',   color: '#f87171' },
+            { val: data.unchanged ?? '—',        lbl: 'Unchanged',       color: '#94a3b8' },
+          ];
+          grid.innerHTML = metrics.map(m =>
+            `<div class="metric"><div class="val" style="color:${m.color}">${m.val}</div><div class="lbl">${m.lbl}</div></div>`
+          ).join('');
+          grid.style.display = 'grid';
+
+          if (data.status === 'empty') {
+            out.textContent = '⚠️ No nodes found — save your mind map first.';
+            out.style.color = '#fcd34d';
+          } else {
+            out.textContent = '✅ ' + (full ? 'Full re-ingest' : 'Incremental ingest') + ' complete.';
+            out.style.color = '#6ee7b7';
+          }
+        } else {
+          out.textContent = '❌ ' + (data.error || JSON.stringify(data));
+          out.style.color = '#fca5a5';
+        }
+      } catch(e) {
+        out.textContent = '❌ Error: ' + e.message;
+        out.style.color = '#fca5a5';
+      }
+
+      btn.disabled = false;
+      btn2.disabled = false;
+      btn.textContent  = full ? '⚠ Full Re-Ingest' : '▶ Incremental Ingest';
+    }
+
+    async function loadStats() {
+      const out = document.getElementById('stats-result');
+      const grid = document.getElementById('metrics-grid');
+      try {
+        const r = await fetch('/api/rag/stats');
+        if (r.status === 403) {
+          out.textContent = 'Stats available to admin users only.';
+          out.style.color = '#fcd34d';
+          return;
+        }
+        const data = await r.json();
+        const metrics = [
+          { val: data.total_queries,      lbl: 'Total Queries' },
+          { val: data.rag_queries,         lbl: 'RAG Queries' },
+          { val: data.web_queries,         lbl: 'Web Queries' },
+          { val: data.cache_hits,          lbl: 'Cache Hits' },
+          { val: (data.cache_hit_rate*100).toFixed(1)+'%', lbl: 'Cache Hit Rate' },
+          { val: data.avg_latency_ms+'ms', lbl: 'Avg Latency' },
+          { val: data.avg_precision_at_k ?? 'N/A', lbl: 'Avg Precision@k' },
+          { val: data.avg_recall_at_k    ?? 'N/A', lbl: 'Avg Recall@k' },
+          { val: data.avg_mrr            ?? 'N/A', lbl: 'Avg MRR' },
+        ];
+        grid.innerHTML = metrics.map(m =>
+          `<div class="metric"><div class="val">${m.val}</div><div class="lbl">${m.lbl}</div></div>`
+        ).join('');
+        out.textContent = '';
+      } catch(e) {
+        out.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

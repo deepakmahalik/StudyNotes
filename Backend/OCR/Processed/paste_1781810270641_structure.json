@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Evaluation Metrics for RAG Systems",
+      "description": "Overview of metrics used to evaluate Retrieval Augmented Generation (RAG) systems, from traditional to RAG-specific approaches.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "Traditional Evaluation Metrics",
+      "description": "Metrics designed for fixed reference answers, primarily measuring text overlap.",
+      "parentId": "root"
+    },
+    {
+      "id": "n1_1",
+      "label": "BLEU (Bilingual Evaluation Understudy)",
+      "description": "Measures n-gram overlap between generated and reference text, includes a brevity penalty.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n1_2",
+      "label": "ROUGE (Recall-Oriented Understudy for Gisting Evaluation)",
+      "description": "Focuses on recall, measuring how much core information from the reference is in the output, ideal for summarization.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n1_3",
+      "label": "F1 Score",
+      "description": "Harmonic mean of precision and recall, effective for tasks prioritizing specific facts or entities.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n2",
+      "label": "Need for RAG-Specific Metrics",
+      "description": "Explanation of why traditional metrics are insufficient for RAG systems.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2_1",
+      "label": "RAG System Operation",
+      "description": "RAG systems operate in two stages: retrieval and generation.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_2",
+      "label": "Limitations of Traditional Metrics",
+      "description": "Traditional metrics fail to measure the quality of RAG's specific retrieval and generation stages.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n3",
+      "label": "Key RAG Evaluation Metrics",
+      "description": "Metrics designed to evaluate both information retrieval and synthesis in RAG systems.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3_1",
+      "label": "Context Precision",
+      "description": "Measures how much of the retrieved information is relevant to the user query.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_2",
+      "label": "Context Recall",
+      "description": "Measures the retriever\u2019s ability to pull all necessary information from the database.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_3",
+      "label": "Answer Relevance",
+      "description": "Assesses if the generated answer directly addresses the user's intent using embeddings.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_4",
+      "label": "Faithfulness",
+      "description": "Ensures the answer is strictly grounded in the retrieved context, preventing hallucinations.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_5",
+      "label": "Groundedness",
+      "description": "Evaluates if the answer relies on the retrieved documents rather than the model's internal memory.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n4",
+      "label": "Modern Evaluation Workflow",
+      "description": "New approaches and frameworks for evaluating RAG systems.",
+      "parentId": "root"
+    },
+    {
+      "id": "n4_1",
+      "label": "LLM-as-a-Judge",
+      "description": "Using a large language model to act as an evaluator, mimicking human judgment for semantic understanding.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_2",
+      "label": "RAGAS (RAG Assessment)",
+      "description": "An open-source framework that automates the calculation of RAG-specific metrics using embeddings and LLM-based scoring.",
+      "parentId": "n4"
+    }
+  ]
+}

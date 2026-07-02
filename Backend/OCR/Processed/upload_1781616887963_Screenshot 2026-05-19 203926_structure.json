@@ -1,0 +1,64 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Router LinkedIn Chain",
+      "description": "A system or process designed for generating LinkedIn posts, likely involving AI and prompt routing.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "Prompt Templates",
+      "description": "Reusable structures for generating prompts within the system.",
+      "parentId": "root"
+    },
+    {
+      "id": "n1_1",
+      "label": "Title Placeholder",
+      "description": "A variable or slot within the prompt template, indicated by '{title}', to be filled with a specific topic.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n2",
+      "label": "System Components",
+      "description": "Key modules or functions that make up the Router LinkedIn chain.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2_1",
+      "label": "Input Classifier",
+      "description": "A component responsible for categorizing or processing user input.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_2",
+      "label": "Router LLM Prompt",
+      "description": "A specific prompt used by a Large Language Model (LLM) for routing or directing the content generation process.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n3",
+      "label": "User Interaction & Input",
+      "description": "How users interact with the system and provide their requests.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3_1",
+      "label": "User Input",
+      "description": "The direct input provided by the user to initiate content generation.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_2",
+      "label": "Example User Input",
+      "description": "A concrete illustration of a user's request for a LinkedIn post.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_2_1",
+      "label": "Example Post Topic",
+      "description": "The specific topic requested in the example user input for a LinkedIn post: 'AI Agents Taking over Content Creation'.",
+      "parentId": "n3_2"
+    }
+  ]
+}

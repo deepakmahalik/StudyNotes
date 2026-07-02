@@ -1,0 +1,16 @@
+flask
+flask_cors
+langchain_google_genai
+
+# RAG pipeline dependencies
+qdrant-client
+sentence-transformers
+rank-bm25
+duckduckgo-search
+langchain-core
+
+# File processors
+pdfplumber        # PDF text extraction
+pypdf             # PDF fallback
+python-docx       # DOCX extraction
+docx2txt          # DOC fallback

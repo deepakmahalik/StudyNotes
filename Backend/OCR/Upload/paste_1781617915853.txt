@@ -1,0 +1,43 @@
+RAGAs (Retrieval Augmented Generation Assessment) is a framework for reference-free evaluation of RAG pipelines. It provides automated metrics to assess retrieval quality, generation faithfulness, and overall answer quality without requiring human-annotated ground truth.
+
+What is RAGAs?
+Full form: Retrieval Augmented Generation Assessment
+
+Purpose: To evaluate RAG systems (retriever + generator) in a systematic way.
+
+Key innovation: Unlike traditional evaluation methods, RAGAs does not rely on human-annotated reference answers. Instead, it uses automated metrics to judge performance.
+
+Why RAG Evaluation is Challenging
+RAG systems combine:
+
+Retriever – finds relevant context passages.
+
+Generator (LLM) – produces answers using retrieved context.
+
+Evaluation must consider:
+
+Retrieval relevance (Did the retriever fetch the right documents?)
+
+Faithful usage (Did the LLM correctly use the retrieved context?)
+
+Answer quality (Is the final response coherent, accurate, and useful?)
+
+ How RAGAs Works
+RAGAs introduces a suite of metrics that cover multiple dimensions:
+
+Context relevance: Measures how well retrieved passages match the query.
+
+Answer faithfulness: Checks if the generated answer is grounded in retrieved context.
+
+Answer quality: Evaluates fluency, coherence, and informativeness.
+
+Reference-free evaluation: No need for gold-standard answers, enabling faster and more scalable testing.
+
+Benefits of RAGAs
+Faster evaluation cycles → critical for rapid experimentation in RAG pipelines.
+
+Scalable testing → avoids costly human annotation.
+
+Holistic assessment → covers retrieval, grounding, and generation quality.
+
+Supports adoption of LLMs → especially important as enterprises deploy RAG for customer support, research, and domain-specific Q&A.

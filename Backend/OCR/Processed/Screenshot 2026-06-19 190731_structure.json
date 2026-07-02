@@ -1,0 +1,76 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "B Rac System Overview",
+      "description": "An overview of the B Rac system, encompassing its operational steps, fundamental concepts, and related interview topics.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "B Rac Operational Steps",
+      "description": "The sequential process steps involved in the B Rac system's operation.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2",
+      "label": "Data Ingestion",
+      "description": "The initial phase of bringing raw data into the system for processing.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n3",
+      "label": "Embedding Generation",
+      "description": "The process of converting data into numerical vector representations (embeddings).",
+      "parentId": "n1"
+    },
+    {
+      "id": "n4",
+      "label": "Vector Database Management",
+      "description": "Storing and managing the generated vector embeddings, often referred to as 'Vector DB'.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n5",
+      "label": "Query Processing",
+      "description": "Handling incoming queries to find relevant information within the system.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n6",
+      "label": "Retrieval",
+      "description": "The act of fetching relevant data or embeddings from the vector database based on a query.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n7",
+      "label": "Reranking",
+      "description": "Reordering the retrieved results to improve relevance and quality for the user.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n8",
+      "label": "B Rac Fundamentals",
+      "description": "Core concepts and foundational techniques that underpin the B Rac system.",
+      "parentId": "root"
+    },
+    {
+      "id": "n9",
+      "label": "Embeddings",
+      "description": "The concept of representing data as dense vectors in a high-dimensional space.",
+      "parentId": "n8"
+    },
+    {
+      "id": "n10",
+      "label": "Chunking",
+      "description": "The process of breaking down large documents or data into smaller, manageable segments for processing.",
+      "parentId": "n8"
+    },
+    {
+      "id": "n11",
+      "label": "YDB Interview Questions",
+      "description": "A category for interview questions specifically related to YDB, potentially in the context of B Rac.",
+      "parentId": "root"
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "RAGAs (Retrieval Augmented Generation Assessment)",
+      "description": "A framework for reference-free evaluation of RAG pipelines, providing automated metrics to assess retrieval quality, generation faithfulness, and overall answer quality.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "What is RAGAs?",
+      "description": "Elaboration on the definition, purpose, and key innovation of RAGAs.",
+      "parentId": "root"
+    },
+    {
+      "id": "n1_1",
+      "label": "Full Form",
+      "description": "Retrieval Augmented Generation Assessment.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n1_2",
+      "label": "Purpose",
+      "description": "To evaluate RAG systems (retriever + generator) in a systematic way.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n1_3",
+      "label": "Key Innovation",
+      "description": "Unlike traditional methods, RAGAs does not rely on human-annotated reference answers, instead using automated metrics.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n2",
+      "label": "Why RAG Evaluation is Challenging",
+      "description": "Explains the complexity of evaluating RAG systems due to their hybrid nature.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2_1",
+      "label": "RAG Systems Combine",
+      "description": "Components that make up a RAG system.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_1_1",
+      "label": "Retriever",
+      "description": "Finds relevant context passages.",
+      "parentId": "n2_1"
+    },
+    {
+      "id": "n2_1_2",
+      "label": "Generator (LLM)",
+      "description": "Produces answers using retrieved context.",
+      "parentId": "n2_1"
+    },
+    {
+      "id": "n2_2",
+      "label": "Evaluation Must Consider",
+      "description": "Key aspects that need to be assessed during RAG evaluation.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_2_1",
+      "label": "Retrieval Relevance",
+      "description": "Did the retriever fetch the right documents?",
+      "parentId": "n2_2"
+    },
+    {
+      "id": "n2_2_2",
+      "label": "Faithful Usage",
+      "description": "Did the LLM correctly use the retrieved context?",
+      "parentId": "n2_2"
+    },
+    {
+      "id": "n2_2_3",
+      "label": "Answer Quality",
+      "description": "Is the final response coherent, accurate, and useful?",
+      "parentId": "n2_2"
+    },
+    {
+      "id": "n3",
+      "label": "How RAGAs Works",
+      "description": "Details the suite of metrics RAGAs introduces to cover multiple evaluation dimensions.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3_1",
+      "label": "Suite of Metrics",
+      "description": "Metrics introduced by RAGAs to assess different aspects of RAG performance.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_1_1",
+      "label": "Context Relevance",
+      "description": "Measures how well retrieved passages match the query.",
+      "parentId": "n3_1"
+    },
+    {
+      "id": "n3_1_2",
+      "label": "Answer Faithfulness",
+      "description": "Checks if the generated answer is grounded in retrieved context.",
+      "parentId": "n3_1"
+    },
+    {
+      "id": "n3_1_3",
+      "label": "Answer Quality",
+      "description": "Evaluates fluency, coherence, and informativeness of the answer.",
+      "parentId": "n3_1"
+    },
+    {
+      "id": "n3_2",
+      "label": "Reference-Free Evaluation",
+      "description": "Eliminates the need for gold-standard answers, enabling faster and more scalable testing.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n4",
+      "label": "Benefits of RAGAs",
+      "description": "Advantages of using the RAGAs framework for RAG pipeline evaluation.",
+      "parentId": "root"
+    },
+    {
+      "id": "n4_1",
+      "label": "Faster Evaluation Cycles",
+      "description": "Critical for rapid experimentation in RAG pipelines.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_2",
+      "label": "Scalable Testing",
+      "description": "Avoids costly human annotation.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_3",
+      "label": "Holistic Assessment",
+      "description": "Covers retrieval, grounding, and generation quality.",
+      "parentId": "n4"
+    },
+    {
+      "id": "n4_4",
+      "label": "Supports Adoption of LLMs",
+      "description": "Especially important as enterprises deploy RAG for customer support, research, and domain-specific Q&A.",
+      "parentId": "n4"
+    }
+  ]
+}

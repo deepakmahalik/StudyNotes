@@ -1,0 +1,142 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Types of Motion",
+      "description": "A classification of different ways objects can move.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "Curvilinear Motion",
+      "description": "The motion of a body along a curved path.",
+      "parentId": "root"
+    },
+    {
+      "id": "n1_1",
+      "label": "Examples of Curvilinear Motion",
+      "description": "Instances where objects follow a curved trajectory.",
+      "parentId": "n1"
+    },
+    {
+      "id": "n1_1_1",
+      "label": "Javelin or Shot Put",
+      "description": "An object thrown by an athlete, following a parabolic path.",
+      "parentId": "n1_1"
+    },
+    {
+      "id": "n1_1_2",
+      "label": "Stone Thrown by an Athlete",
+      "description": "A stone propelled through the air, exhibiting a curved path.",
+      "parentId": "n1_1"
+    },
+    {
+      "id": "n2",
+      "label": "Circular Motion",
+      "description": "The motion of a body in a circular path.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2_1",
+      "label": "Revolving Motion",
+      "description": "A body moving around a fixed point by changing its position.",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_1_1",
+      "label": "Examples of Revolving Motion",
+      "description": "Instances where an object orbits another.",
+      "parentId": "n2_1"
+    },
+    {
+      "id": "n2_1_1_1",
+      "label": "Planets around the Sun",
+      "description": "Celestial bodies orbiting a star.",
+      "parentId": "n2_1_1"
+    },
+    {
+      "id": "n2_1_1_2",
+      "label": "Artificial Satellite Orbiting Earth",
+      "description": "Man-made objects orbiting a planet.",
+      "parentId": "n2_1_1"
+    },
+    {
+      "id": "n2_1_1_3",
+      "label": "Electrons around the Nucleus",
+      "description": "Subatomic particles orbiting an atomic nucleus.",
+      "parentId": "n2_1_1"
+    },
+    {
+      "id": "n2_2",
+      "label": "Rotational Motion",
+      "description": "A body moving around a fixed point without changing its position (spinning on its axis).",
+      "parentId": "n2"
+    },
+    {
+      "id": "n2_2_1",
+      "label": "Examples of Rotational Motion",
+      "description": "Instances where an object spins on its own axis.",
+      "parentId": "n2_2"
+    },
+    {
+      "id": "n2_2_1_1",
+      "label": "Blades of a Fan",
+      "description": "The spinning motion of fan blades.",
+      "parentId": "n2_2_1"
+    },
+    {
+      "id": "n2_2_1_2",
+      "label": "A Spinning Top",
+      "description": "A toy that rotates on its axis.",
+      "parentId": "n2_2_1"
+    },
+    {
+      "id": "n2_2_1_3",
+      "label": "Potter's Wheel",
+      "description": "A rotating disc used for shaping clay.",
+      "parentId": "n2_2_1"
+    },
+    {
+      "id": "n2_2_1_4",
+      "label": "Windmill Blades",
+      "description": "The rotating blades of a windmill.",
+      "parentId": "n2_2_1"
+    },
+    {
+      "id": "n2_2_1_5",
+      "label": "Earth around its own axis",
+      "description": "The daily rotation of the Earth.",
+      "parentId": "n2_2_1"
+    },
+    {
+      "id": "n3",
+      "label": "Oscillatory Motion",
+      "description": "The back and forth motion of a body about a mean (equilibrium) point.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3_1",
+      "label": "Examples of Oscillatory Motion",
+      "description": "Instances where an object moves periodically back and forth.",
+      "parentId": "n3"
+    },
+    {
+      "id": "n3_1_1",
+      "label": "Motion of a Simple Pendulum",
+      "description": "A weight swinging back and forth from a pivot point.",
+      "parentId": "n3_1"
+    },
+    {
+      "id": "n3_1_2",
+      "label": "Motion of a Swing",
+      "description": "A seat suspended by ropes, moving back and forth.",
+      "parentId": "n3_1"
+    },
+    {
+      "id": "n3_1_3",
+      "label": "Motion of a Piston of an Engine",
+      "description": "The reciprocating movement of a piston within an engine cylinder.",
+      "parentId": "n3_1"
+    }
+  ]
+}

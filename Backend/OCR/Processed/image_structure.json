@@ -1,0 +1,46 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "RAG Techniques",
+      "description": "Various approaches and advancements in Retrieval Augmented Generation.",
+      "parentId": null
+    },
+    {
+      "id": "n1",
+      "label": "Agentic RAG",
+      "description": "A RAG approach involving agents for retrieval and generation.",
+      "parentId": "root"
+    },
+    {
+      "id": "n2",
+      "label": "Vectorless RAG",
+      "description": "A RAG method that does not rely on vector embeddings for retrieval.",
+      "parentId": "root"
+    },
+    {
+      "id": "n3",
+      "label": "Corrective RAG",
+      "description": "A RAG technique focused on correcting or refining retrieved information.",
+      "parentId": "root"
+    },
+    {
+      "id": "n4",
+      "label": "SelFRAG",
+      "description": "Self-RAG, an approach where the model self-reflects and improves retrieval.",
+      "parentId": "root"
+    },
+    {
+      "id": "n5",
+      "label": "Graph RAG",
+      "description": "A RAG method that leverages graph databases for information retrieval.",
+      "parentId": "root"
+    },
+    {
+      "id": "n6",
+      "label": "Raptor",
+      "description": "A specific RAG framework or technique, possibly for hierarchical retrieval.",
+      "parentId": "root"
+    }
+  ]
+}
