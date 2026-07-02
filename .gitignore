@@ -9,6 +9,6 @@ wheels/
 # Virtual environments
 .venv
 Backend/database.db
-Config\config.properties
+Config/config.properties
 
 "Backend/database.db" 
