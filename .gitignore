@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+Backend/database.db
+Config\config.properties
+
+
