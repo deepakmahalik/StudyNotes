@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studynotes",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["Backend/app.py"],
+      "port": 5000
+    }
+  ]
+}

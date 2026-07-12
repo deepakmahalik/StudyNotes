@@ -712,14 +712,202 @@ body.theme-tree #tm-canvas { display:block; }
 #chatbot-panel.minimized .chat-input-area {
   display: none !important;
 }
+
+/* ══════════════════════════════════════════════
+   EXCALIDRAW CANVAS (EC)
+   ══════════════════════════════════════════════ */
+#exp-mid-body { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #141520; }
+#ec-canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; cursor: default; }
+#ec-text-input {
+  display: none; position: absolute; background: transparent;
+  border: 1px dashed rgba(56,189,248,0.6); outline: none; resize: none;
+  color: #e2e8f0; font-family: 'Inter', sans-serif; padding: 2px 4px;
+  border-radius: 3px; overflow: hidden; min-width: 60px; min-height: 22px;
+  line-height: 1.4; white-space: pre;
+}
+#ec-empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  pointer-events: none; user-select: none;
+}
+/* Floating toolbar */
+#ec-toolbar {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  background: #1e2130; border: 1px solid #2d3148;
+  border-radius: 10px; padding: 4px 6px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  z-index: 20; user-select: none;
+}
+.ec-tool {
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: none; background: transparent;
+  color: var(--text2); cursor: pointer; font-size: 13px; transition: all 0.12s;
+}
+.ec-tool:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.ec-tool.active { background: rgba(56,189,248,0.18); color: #38bdf8; }
+.ec-tool-sep { width: 1px; height: 22px; background: #2d3148; margin: 0 3px; flex-shrink: 0; }
+/* Style bar */
+#ec-style-bar {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  background: #1e2130; border: 1px solid #2d3148;
+  border-radius: 10px; padding: 6px 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  z-index: 20; user-select: none; white-space: nowrap;
+}
+.ec-swatch, .ec-fswatch {
+  width: 16px; height: 16px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; padding: 0; transition: border-color 0.1s;
+}
+.ec-swatch.active, .ec-fswatch.active { border-color: #fff; }
+.ec-swatch:hover, .ec-fswatch:hover { border-color: rgba(255,255,255,0.5); }
+
+/* ══════════════════════════════════════════════
+   EXPLORER VIEW — 3-panel layout
+   ══════════════════════════════════════════════ */
+#explorer-overlay {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: row;
+  background: var(--bg);
+}
+body.theme-explorer #explorer-overlay { display: flex; }
+body.theme-explorer #sidebar       { display: none !important; }
+body.theme-explorer #rh            { display: none !important; }
+body.theme-explorer #main-body     { display: none !important; }
+body.theme-explorer #right-sidebar { display: none !important; }
+body.theme-explorer #footer        { display: none !important; }
+
+/* Left panel – node tree */
+#exp-left {
+  width: 280px;
+  min-width: 160px;
+  max-width: 60vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#exp-left-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+#exp-search-wrap { position: relative; margin-top: 6px; }
+#exp-search { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 5px 8px 5px 26px; font-size: 11.5px; outline: none; font-family: inherit; box-sizing: border-box; }
+#exp-search:focus { border-color: var(--border3); }
+#exp-search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 12px; pointer-events: none; }
+#exp-tree-scroll { flex: 1; overflow-y: auto; overflow-x: auto; padding: 4px 0 16px; }
+#exp-tree-scroll::-webkit-scrollbar { width: 5px; }
+#exp-tree-scroll::-webkit-scrollbar-thumb { background: var(--border3); border-radius: 3px; }
+#exp-tree-container { min-width: max-content; }
+#exp-stats { padding: 6px 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 12px; }
+
+/* Drag dividers */
+.exp-divider {
+  width: 5px;
+  background: transparent;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  position: relative;
+}
+.exp-divider:hover, .exp-divider.active { background: var(--accent2); }
+.exp-divider::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+/* Middle panel – canvas */
+#exp-mid {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg3);
+  overflow: hidden;
+}
+#exp-mid-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 40px;
+}
+#exp-mid-title { font-size: 12px; color: var(--text2); font-family: var(--mono); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#exp-mid-toolbar { display: flex; gap: 4px; flex-shrink: 0; }
+#exp-mid-body { flex: 1; overflow: auto; position: relative; }
+#exp-canvas-host { position: relative; min-width: 700px; min-height: 500px; }
+#exp-empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  pointer-events: none;
+}
+#exp-empty-state .exp-empty-icon { font-size: 36px; opacity: 0.25; }
+#exp-empty-state .exp-empty-txt { font-size: 12px; }
+
+/* Right panel – properties + chatbot */
+#exp-right {
+  width: 300px;
+  min-width: 180px;
+  max-width: 60vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#exp-right-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.exp-tab {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text3);
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.exp-tab:hover { color: var(--text2); }
+.exp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+#exp-right-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+#exp-props-pane { flex: 1; overflow-y: auto; display: none; padding: 12px; }
+#exp-props-pane.active { display: block; }
+#exp-chat-pane { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+#exp-chat-pane.active { display: flex; }
 </style>
 
         <div id="theme-drop" style="position:relative;display:inline-block">
           <button class="hdr-btn" id="btn-theme"><span id="theme-icon">🔵</span> <span id="theme-label">Dots</span> ▾</button>
           <div id="theme-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;box-shadow:0 6px 20px rgba(0,0,0,0.5);z-index:999;min-width:110px;overflow:hidden">
-            <div class="theme-opt" data-val="dots"  style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">🔵 Dots</div>
-            <div class="theme-opt" data-val="notes" style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">📝 Notes</div>
-            <div class="theme-opt" data-val="tree"  style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">🌳 Tree</div>
+            <div class="theme-opt" data-val="dots"     style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">🔵 Dots</div>
+            <div class="theme-opt" data-val="notes"    style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">📝 Notes</div>
+            <div class="theme-opt" data-val="tree"     style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">🌳 Tree</div>
+            <div class="theme-opt" data-val="explorer" style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:8px;transition:background 0.15s">🧭 Explorer</div>
           </div>
         </div>
         <div id="data-drop" style="position:relative;display:inline-block">
@@ -757,7 +945,113 @@ body.theme-tree #tm-canvas { display:block; }
       </div>
       <iframe id="main-body-html-viewer" style="display:none; width:100%; flex:1; min-height: 200px; border:1px solid var(--border); border-radius:12px; background:#0f172a; box-shadow:0 8px 32px rgba(0,0,0,0.5);" src=""></iframe>
     </div>
-    
+
+    <!-- ═══ EXPLORER VIEW — 3-panel layout (flex child of #main) ═══ -->
+    <div id="explorer-overlay">
+      <!-- LEFT: node tree -->
+      <div id="exp-left">
+        <div id="exp-left-header">
+          <div class="logo" style="margin-bottom:8px">
+            <img src="/static/logo.png" class="logo-icon" alt="Logo">
+            <div>
+              <div class="logo-text" style="font-size:1.1rem;font-weight:700">Deepak's Knowledge Tree</div>
+              <div class="logo-sub">Knowledge Navigator</div>
+            </div>
+          </div>
+          <div id="exp-breadcrumb" style="font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:8px"><span style="color:var(--text3)">Select a node</span></div>
+          <div id="exp-search-wrap">
+            <span id="exp-search-icon">⌕</span>
+            <input id="exp-search" type="text" placeholder="Search nodes…" autocomplete="off">
+          </div>
+        </div>
+        <div id="exp-tree-scroll"><div id="exp-tree-container"></div></div>
+        <div id="exp-stats">
+          <div class="stat"><div class="stat-n" id="exp-stat-nodes">0</div><div class="stat-l">Nodes</div></div>
+          <div class="stat"><div class="stat-n" id="exp-stat-imgs">0</div><div class="stat-l">Images</div></div>
+          <div class="stat"><div class="stat-n" id="exp-stat-depth">0</div><div class="stat-l">Depth</div></div>
+        </div>
+      </div>
+      <!-- DIVIDER 1 -->
+      <div class="exp-divider" id="exp-div1"></div>
+      <!-- MIDDLE: canvas -->
+      <div id="exp-mid">
+        <div id="exp-mid-header">
+          <span id="exp-mid-title" style="color:var(--text3);font-size:12px;font-family:var(--mono);">Select a node</span>
+        </div>
+        <div id="exp-mid-body">
+          <!-- Excalidraw-style floating toolbar -->
+          <div id="ec-toolbar">
+            <button class="ec-tool" data-tool="hand"    title="Hand – pan (H)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8l-2-2a1.5 1.5 0 0 0-2 2l3 5a5 5 0 0 0 5 3h2a5 5 0 0 0 5-5V11a2 2 0 0 0-4 0"/></svg></button>
+            <button class="ec-tool active" data-tool="select"  title="Select (V)"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12-8 2-3 8z"/></svg></button>
+            <div class="ec-tool-sep"></div>
+            <button class="ec-tool" data-tool="rect"    title="Rectangle (R)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg></button>
+            <button class="ec-tool" data-tool="diamond" title="Diamond (D)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l10 10-10 10L2 12z"/></svg></button>
+            <button class="ec-tool" data-tool="ellipse" title="Ellipse (O)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg></button>
+            <button class="ec-tool" data-tool="arrow"   title="Arrow (A)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg></button>
+            <button class="ec-tool" data-tool="line"    title="Line (L)"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg></button>
+            <button class="ec-tool" data-tool="pencil"  title="Pencil (P)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+            <button class="ec-tool" data-tool="text"    title="Text (T)" style="font-weight:700;font-size:14px;font-family:serif;">A</button>
+            <button class="ec-tool" data-tool="image"   title="Image (I)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></button>
+            <div class="ec-tool-sep"></div>
+            <button class="ec-tool" data-tool="eraser"  title="Eraser (E)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16l11-11 7 7-1.5 1.5"/><path d="M6 17l3-3"/></svg></button>
+          </div>
+          <!-- Style controls bar (bottom) -->
+          <div id="ec-style-bar">
+            <span style="font-size:10px;color:var(--text3)">Stroke</span>
+            <div id="ec-stroke-swatches" style="display:flex;gap:3px;">
+              <button class="ec-swatch active" data-color="#e2e8f0" style="background:#e2e8f0" title="White"></button>
+              <button class="ec-swatch" data-color="#f87171" style="background:#f87171" title="Red"></button>
+              <button class="ec-swatch" data-color="#fb923c" style="background:#fb923c" title="Orange"></button>
+              <button class="ec-swatch" data-color="#facc15" style="background:#facc15" title="Yellow"></button>
+              <button class="ec-swatch" data-color="#34d399" style="background:#34d399" title="Green"></button>
+              <button class="ec-swatch" data-color="#38bdf8" style="background:#38bdf8" title="Blue"></button>
+              <button class="ec-swatch" data-color="#818cf8" style="background:#818cf8" title="Purple"></button>
+            </div>
+            <div class="ec-tool-sep"></div>
+            <span style="font-size:10px;color:var(--text3)">Fill</span>
+            <div id="ec-fill-swatches" style="display:flex;gap:3px;">
+              <button class="ec-fswatch active" data-fill="transparent" style="background:transparent;border:1px dashed #64748b;" title="None"></button>
+              <button class="ec-fswatch" data-fill="rgba(56,189,248,0.15)" style="background:rgba(56,189,248,0.15)" title="Blue tint"></button>
+              <button class="ec-fswatch" data-fill="rgba(52,211,153,0.15)" style="background:rgba(52,211,153,0.15)" title="Green tint"></button>
+              <button class="ec-fswatch" data-fill="rgba(248,113,113,0.15)" style="background:rgba(248,113,113,0.15)" title="Red tint"></button>
+            </div>
+            <div class="ec-tool-sep"></div>
+            <span style="font-size:10px;color:var(--text3)">Width</span>
+            <select id="ec-stroke-width" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;font-size:10px;padding:1px 4px;">
+              <option value="1">Thin</option>
+              <option value="2" selected>Normal</option>
+              <option value="4">Bold</option>
+              <option value="7">Heavy</option>
+            </select>
+            <div class="ec-tool-sep"></div>
+            <button class="ec-clear-btn" onclick="ecClear()" title="Clear canvas" style="font-size:10px;color:#f87171;background:none;border:1px solid rgba(248,113,113,0.3);border-radius:4px;padding:2px 6px;cursor:pointer;">✕ Clear</button>
+          </div>
+          <!-- Main canvas -->
+          <canvas id="ec-canvas"></canvas>
+          <!-- Text input overlay -->
+          <textarea id="ec-text-input" rows="1" spellcheck="false"></textarea>
+          <!-- Empty state -->
+          <div id="ec-empty">
+            <div style="font-size:48px;opacity:0.12">✏</div>
+            <div style="font-size:13px;color:var(--text3)">Select a node to start drawing</div>
+          </div>
+        </div>
+      </div>
+      <!-- DIVIDER 2 -->
+      <div class="exp-divider" id="exp-div2"></div>
+      <!-- RIGHT: properties + chatbot tabs -->
+      <div id="exp-right">
+        <div id="exp-right-tabs">
+          <div class="exp-tab active" id="exp-tab-props" onclick="expSwitchTab('props')">⚙ Properties</div>
+          <div class="exp-tab"        id="exp-tab-chat"  onclick="expSwitchTab('chat')">💬 Chat</div>
+        </div>
+        <div id="exp-right-body">
+          <div id="exp-props-pane" class="active"></div>
+          <div id="exp-chat-pane"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="right-sidebar">
       <div id="editor">
         <div class="ed-top">
@@ -877,7 +1171,7 @@ body.theme-tree #tm-canvas { display:block; }
   <div class="ctx-item" id="ctx-attach">📎 Attach file</div>
   <div class="ctx-item" id="ctx-toggle">⊟ Toggle</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-item" id="ctx-hide">👁 Hide from map</div>
+  <div class="ctx-item" id="ctx-hide">👁 Hide node</div>
   <div class="ctx-item" id="ctx-show-hidden" style="display:none">👁 Show hidden children</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item red" id="ctx-del">✕ Delete</div>
@@ -1039,11 +1333,11 @@ function renderTree(){
   const q = (document.getElementById('search-box').value||'').toLowerCase().trim();
 
   function matches(n){ return !q || n.name.toLowerCase().includes(q) || (n.desc||'').toLowerCase().includes(q); }
-  function visible(n){ if(matches(n))return true; return kids(n.id).some(c=>visible(c)); }
+  function visible(n){ if(n.mapHidden) return false; if(matches(n))return true; return kids(n.id).some(c=>visible(c)); }
 
   function mkRow(node, dep, parentEl){
     if(!visible(node)) return;
-    const ch = kids(node.id);
+    const ch = kids(node.id).filter(c => !c.mapHidden);
     const hasK = ch.length>0;
     const isOpen = node.open && hasK;
     const isSel = node.id===sel;
@@ -1217,6 +1511,9 @@ function renderTree(){
   if (currentTheme === 'tree') {
     renderTreeMap();
   }
+  if (currentTheme === 'explorer') {
+    expRenderTree();
+  }
 }
 
 // ─── SELECT + EDITOR ──────────────────────────────────────
@@ -1234,16 +1531,29 @@ function selectNode(id){
   const sb = document.getElementById('search-box');
   if(sb && sb.value) { sb.value = ''; }
 
-  // Expand all ancestors so the selected node is visible, and auto-open its description
+  // Expand all ancestors so the selected node is visible in the tree
   if(id) {
     ancestors(id).forEach(a => { a.open = true; });
-    expandedDesc.add(id);
+    // Description stays closed — only the chevron (▷) toggle opens it
   }
 
   renderTree();
   const iframe = document.getElementById('main-body-html-viewer');
   const chat = document.getElementById('chatbot-panel');
   if (id) {
+    // Always update breadcrumb for the selected node
+    const crumbs = ancestors(id);
+    document.getElementById('breadcrumb').innerHTML = crumbs.map((c, i) =>
+      i < crumbs.length - 1
+        ? '<span style="cursor:pointer;color:var(--text3)" data-bc="'+c.id+'">'+c.name+'</span><span class="bc-sep">›</span>'
+        : '<span class="bc-cur">'+c.name+'</span>'
+    ).join('');
+    document.querySelectorAll('[data-bc]').forEach(el =>
+      el.addEventListener('click', () => selectNode(el.dataset.bc))
+    );
+    document.getElementById('hdr-dup').style.display = 'inline-block';
+    document.getElementById('hdr-del').style.display = 'inline-block';
+
     if (currentTheme === 'tree') {
       document.getElementById('main-body').appendChild(chat);
       chat.classList.add('in-main');
@@ -1640,7 +1950,7 @@ function buildImages(n){
 }
 
 function buildChildren(n){
-  const ch=kids(n.id);
+  const ch=kids(n.id).filter(c=>!c.mapHidden);
   document.getElementById('ed-child-count').textContent=ch.length;
   const el=document.getElementById('ed-children');
   if(!ch.length){ el.innerHTML='<div class="no-children">No child nodes yet.</div>'; return; }
@@ -1788,10 +2098,14 @@ function addNode(parentId){
   nodes.push(n);
   if(parentId){const p=byId(parentId);if(p)p.open=true;}
   save(); renderTree(); selectNode(n.id);
+  // Override selectNode's default (chat panel) — open properties panel so user can rename
+  const chat = document.getElementById('chatbot-panel');
+  if (chat) chat.style.display = 'none';
+  openEditor();
   setTimeout(()=>{
     const inp=document.getElementById('ed-name');
-    if(inp){ inp.removeAttribute('readonly'); inp.focus(); inp.select(); }
-  },100);
+    if(inp){ inp.focus(); inp.select(); }
+  },80);
   setStatus('Node created');
 }
 
@@ -1840,7 +2154,7 @@ function openCtx(e,id){
   const showEl=document.getElementById('ctx-show-hidden');
   if(n){
     hideEl.style.display = n.parentId ? 'block' : 'none';
-    hideEl.textContent = n.mapHidden ? '👁 Show in map' : '👁 Hide from map';
+    hideEl.textContent = n.mapHidden ? '👁 Show node' : '👁 Hide node';
     // "Show hidden children" appears if any direct child is hidden
     const hasHidden = kids(id).some(c=>c.mapHidden);
     showEl.style.display = hasHidden ? 'block' : 'none';
@@ -1953,15 +2267,17 @@ document.getElementById('btn-zoom-out').addEventListener('click',()=>zoomStep(-1
 
 // ─── THEME TOGGLE ─────────────────────────────────────
 let currentTheme = localStorage.getItem('nt3-theme') || 'dots';
-const THEMES = ['dots','notes','tree'];
+const THEMES = ['dots','notes','tree','explorer'];
 function applyTheme(t){
   currentTheme = t;
   localStorage.setItem('nt3-theme', t);
-  document.body.classList.toggle('theme-notes', t==='notes');
-  document.body.classList.toggle('theme-tree',  t==='tree');
+  document.body.classList.toggle('theme-notes',    t==='notes');
+  document.body.classList.toggle('theme-tree',     t==='tree');
+  document.body.classList.toggle('theme-explorer', t==='explorer');
   if(t==='tree') requestAnimationFrame(()=>requestAnimationFrame(renderTreeMap));
-  const labels = {dots:'Dots',notes:'Notes',tree:'Tree'};
-  const icons = {dots:'🔵',notes:'📝',tree:'🌳'};
+  if(t==='explorer') requestAnimationFrame(()=>{ expRenderTree(); if(sel) expSelectNode(sel); else ecRender(); });
+  const labels = {dots:'Dots',notes:'Notes',tree:'Tree',explorer:'Explorer'};
+  const icons  = {dots:'🔵',notes:'📝',tree:'🌳',explorer:'🧭'};
   document.getElementById('theme-label').textContent = labels[t];
   document.getElementById('theme-icon').textContent = icons[t];
   document.querySelectorAll('.theme-opt').forEach(o=>{
@@ -1971,6 +2287,25 @@ function applyTheme(t){
   
   const iframe = document.getElementById('main-body-html-viewer');
   const chat = document.getElementById('chatbot-panel');
+
+  // Explorer: chatbot lives inside exp-chat-pane; handled by expSwitchTab
+  if (t === 'explorer') {
+    // ensure chat is back in right-sidebar until user opens Chat tab
+    const rs = document.getElementById('right-sidebar');
+    if (rs && !rs.contains(chat)) { rs.appendChild(chat); chat.classList.remove('in-main'); }
+    document.getElementById('editor').style.display = 'none';
+    if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+    updateMainBodyPadding();
+    return;
+  }
+
+  // When leaving explorer, ensure chat is back in right-sidebar
+  const expChatPane = document.getElementById('exp-chat-pane');
+  if (expChatPane && expChatPane.contains(chat)) {
+    document.getElementById('right-sidebar').appendChild(chat);
+    chat.classList.remove('in-main');
+  }
+
   if (sel) {
     if (t === 'tree') {
       document.getElementById('main-body').appendChild(chat);
@@ -2427,7 +2762,7 @@ document.getElementById('ctx-hide').addEventListener('click',()=>{
   const n=byId(ctxId); if(!n||!n.parentId){ closeCtx(); return; }
   n.mapHidden=!n.mapHidden;
   save(); renderTree(); if(currentTheme==='tree') renderTreeMap();
-  setStatus(n.mapHidden?`"${n.name}" hidden from map`:`"${n.name}" visible again`);
+  setStatus(n.mapHidden?`"${n.name}" hidden from all views`:`"${n.name}" is now visible`);
   closeCtx();
 });
 document.getElementById('ctx-show-hidden').addEventListener('click',()=>{
@@ -4043,17 +4378,50 @@ function exportHTMLDoc() {
     .imgs img { max-width:100%; max-height:380px; border-radius:8px;
                 border:1px solid #1e293b; display:block; }
 
+    /* canvas tables */
+    .exp-table { border-collapse:collapse; font-size:12px; margin:8px 0; width:auto; max-width:100%; }
+    .exp-table th { background:#16192a; color:#a78bfa; font-weight:600; font-size:11px;
+                    border:1px solid #2d3148; padding:5px 10px; text-align:left; }
+    .exp-table td { border:1px solid #2d3148; padding:4px 10px; color:#cbd5e1; vertical-align:top; }
+
     /* child group */
     .kids { border-left:1px solid #1e293b; padding-left:14px; margin-top:4px; }
   `;
 
-  function getKids(pid) { return nodes.filter(n => n.parentId === pid); }
+  function getKids(pid) { return nodes.filter(n => n.parentId === pid && !n.mapHidden); }
+
+  function canvasToHtml(canvasData) {
+    if (!canvasData?.elements?.length) return '';
+    return canvasData.elements.map(el => {
+      if (el.type === 'text' && el.content) {
+        return `<div class="desc">${el.content}</div>`;
+      }
+      if (el.type === 'table' && el.headers) {
+        let t = '<table class="exp-table"><thead><tr>';
+        el.headers.forEach(h => { t += `<th>${h||''}</th>`; });
+        t += '</tr></thead><tbody>';
+        (el.rows||[]).forEach(row => {
+          t += '<tr>';
+          row.forEach(cell => { t += `<td>${cell||''}</td>`; });
+          t += '</tr>';
+        });
+        t += '</tbody></table>';
+        return t;
+      }
+      if (el.type === 'image' && el.src) {
+        return `<div class="imgs"><img src="${el.src}" loading="lazy"></div>`;
+      }
+      return '';
+    }).join('');
+  }
 
   function renderNode(n) {
     const ch = getKids(n.id);
     const hasK    = ch.length > 0;
-    const hasDesc = n.desc && n.desc.trim();
+    const legacyDesc = n.desc && n.desc.trim();
+    const canvasHtml = canvasToHtml(n.canvasData);
     const hasImgs = n.images && n.images.length > 0;
+    const hasContent = legacyDesc || canvasHtml || hasImgs || hasK;
 
     let r = `<details open>`;
     r += `<summary>`;
@@ -4063,9 +4431,10 @@ function exportHTMLDoc() {
     r += `<span class="ttl" style="color:${n.color||'#38bdf8'}">${n.name||'Untitled'}</span>`;
     r += `</summary>`;
 
-    if (hasDesc || hasImgs || hasK) {
+    if (hasContent) {
       r += `<div class="body">`;
-      if (hasDesc) r += `<div class="desc">${n.desc}</div>`;
+      if (legacyDesc) r += `<div class="desc">${n.desc}</div>`;
+      if (canvasHtml) r += canvasHtml;
       if (hasImgs) {
         r += `<div class="imgs">`;
         n.images.forEach(src => { r += `<img src="${src}" loading="lazy">`; });
@@ -4184,6 +4553,1113 @@ function toggleChatbot(forceState) {
     localStorage.removeItem('chatbot-minimized');
   }
 }
+
+// ══════════════════════════════════════════════════════════════
+// EC — Excalidraw-like Canvas (Explorer middle pane)
+// ══════════════════════════════════════════════════════════════
+const EC = {
+  nodeId: null, els: [], tool: 'select', selIds: new Set(),
+  strokeColor: '#e2e8f0', fillColor: 'transparent', strokeWidth: 2, fontSize: 16,
+  vx: 0, vy: 0, zoom: 1,
+  state: 'idle', // idle|drawing|panning|moving|resizing|textediting
+  startCx: 0, startCy: 0,
+  curEl: null, pencilPts: [],
+  dragSnap: [],   // [{id,x,y,x2,y2,points}] at drag start
+  resizeHandle: null, resizeEl: null, resizeSnap: null,
+  panSnap: {x:0,y:0,vx:0,vy:0},
+  imgCache: new Map(),
+  _saveTimer: null,
+};
+
+function ecUid(){ return 'ec_'+Math.random().toString(36).slice(2,9); }
+
+function ecToC(sx,sy){ // screen → canvas
+  const r=document.getElementById('ec-canvas').getBoundingClientRect();
+  return {x:(sx-r.left-EC.vx)/EC.zoom, y:(sy-r.top-EC.vy)/EC.zoom};
+}
+function ecToS(cx,cy){ return {x:cx*EC.zoom+EC.vx, y:cy*EC.zoom+EC.vy}; }
+
+function ecInit(nodeId){
+  EC.nodeId=nodeId; EC.selIds=new Set(); EC.state='idle'; EC.curEl=null;
+  const node=byId(nodeId);
+
+  // If no drawData yet but canvasData exists, import it
+  if(!node?.drawData?.elements?.length && node?.canvasData?.elements?.length){
+    const imported=[];
+    node.canvasData.elements.forEach(el=>{
+      if(el.type==='text'&&el.content){
+        imported.push({id:ecUid(),type:'text',x:el.x||20,y:el.y||20,w:el.w||400,h:el.h||200,
+          text:el.content.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'),
+          strokeColor:'#e2e8f0',fontSize:14,fontFamily:"'Inter',sans-serif"});
+      } else if(el.type==='image'&&el.src){
+        imported.push({id:ecUid(),type:'image',x:el.x||20,y:el.y||20,w:el.w||300,h:el.h||200,src:el.src,strokeColor:'#e2e8f0',strokeWidth:0,fillColor:'transparent'});
+      } else if(el.type==='table'&&el.headers){
+        // Render table as text block
+        let txt=el.headers.join(' | ')+'\n'+el.headers.map(()=>'---').join('-|-');
+        (el.rows||[]).forEach(r=>{txt+='\n'+r.join(' | ');});
+        imported.push({id:ecUid(),type:'text',x:el.x||20,y:el.y||20,w:el.w||400,h:el.h||200,
+          text:txt,strokeColor:'#e2e8f0',fontSize:13,fontFamily:"'Inter',sans-serif"});
+      }
+    });
+    if(!node.drawData) node.drawData={};
+    node.drawData.elements=imported;
+    node.drawData.vx=0; node.drawData.vy=0; node.drawData.zoom=1;
+  }
+
+  EC.els = node?.drawData?.elements ? JSON.parse(JSON.stringify(node.drawData.elements)) : [];
+  EC.vx  = node?.drawData?.vx ?? 0;
+  EC.vy  = node?.drawData?.vy ?? 0;
+  EC.zoom= node?.drawData?.zoom ?? 1;
+  document.getElementById('ec-empty').style.display='none';
+  ecRender();
+}
+
+function ecSave(){
+  clearTimeout(EC._saveTimer);
+  EC._saveTimer=setTimeout(()=>{
+    const node=byId(EC.nodeId); if(!node) return;
+    node.drawData={elements:JSON.parse(JSON.stringify(EC.els)),vx:EC.vx,vy:EC.vy,zoom:EC.zoom};
+    node.dateModified=new Date().toISOString(); save();
+  },400);
+}
+
+function ecRender(){
+  const cvs=document.getElementById('ec-canvas'); if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  const W=cvs.parentElement.clientWidth, H=cvs.parentElement.clientHeight;
+  if(cvs.width!==W||cvs.height!==H){cvs.width=W;cvs.height=H;}
+  ctx.clearRect(0,0,W,H);
+  // background
+  ctx.fillStyle='#141520'; ctx.fillRect(0,0,W,H);
+  // dot grid
+  const gs=Math.max(8,24*EC.zoom);
+  const ox=((EC.vx%gs)+gs)%gs, oy=((EC.vy%gs)+gs)%gs;
+  ctx.fillStyle='rgba(255,255,255,0.055)';
+  for(let x=ox;x<W;x+=gs) for(let y=oy;y<H;y+=gs){
+    ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
+  }
+  ctx.save(); ctx.translate(EC.vx,EC.vy); ctx.scale(EC.zoom,EC.zoom);
+  EC.els.forEach(el=>ecDrawEl(ctx,el));
+  if(EC.state==='drawing'&&EC.curEl){ctx.save();ctx.setLineDash([5,3]);ecDrawEl(ctx,EC.curEl);ctx.restore();}
+  ctx.restore();
+  // selection boxes (screen space)
+  EC.selIds.forEach(id=>{const el=EC.els.find(e=>e.id===id);if(el)ecSelBox(ctx,el);});
+}
+
+function ecDrawEl(ctx,el){
+  const sc=el.strokeColor||'#e2e8f0', fc=el.fillColor||'transparent', sw=el.strokeWidth||2;
+  ctx.strokeStyle=sc; ctx.lineWidth=sw; ctx.fillStyle=fc;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  const {type:t,x,y,w=0,h=0}=el;
+  if(t==='rect'){
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x,y,w,h,4); else ctx.rect(x,y,w,h);
+    if(fc!=='transparent')ctx.fill(); ctx.stroke();
+  } else if(t==='diamond'){
+    const cx=x+w/2,cy=y+h/2;
+    ctx.beginPath();ctx.moveTo(cx,y);ctx.lineTo(x+w,cy);ctx.lineTo(cx,y+h);ctx.lineTo(x,cy);ctx.closePath();
+    if(fc!=='transparent')ctx.fill(); ctx.stroke();
+  } else if(t==='ellipse'){
+    ctx.beginPath();ctx.ellipse(x+w/2,y+h/2,Math.abs(w/2),Math.abs(h/2),0,0,Math.PI*2);
+    if(fc!=='transparent')ctx.fill(); ctx.stroke();
+  } else if(t==='arrow'||t==='line'){
+    const x2=el.x2??x,y2=el.y2??y;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
+    if(t==='arrow'){
+      const ang=Math.atan2(y2-y,x2-x),len=10+sw*2;
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);ctx.lineTo(x2-len*Math.cos(ang-0.45),y2-len*Math.sin(ang-0.45));
+      ctx.moveTo(x2,y2);ctx.lineTo(x2-len*Math.cos(ang+0.45),y2-len*Math.sin(ang+0.45));
+      ctx.stroke();
+    }
+  } else if(t==='pencil'&&el.points?.length>1){
+    ctx.beginPath();ctx.moveTo(el.points[0][0],el.points[0][1]);
+    for(let i=1;i<el.points.length;i++){
+      if(i<el.points.length-1){
+        const mx=(el.points[i][0]+el.points[i+1][0])/2,my=(el.points[i][1]+el.points[i+1][1])/2;
+        ctx.quadraticCurveTo(el.points[i][0],el.points[i][1],mx,my);
+      } else ctx.lineTo(el.points[i][0],el.points[i][1]);
+    }
+    ctx.stroke();
+  } else if(t==='text'){
+    const fs=el.fontSize||16;
+    ctx.fillStyle=sc; ctx.font=`${fs}px 'Inter',sans-serif`; ctx.textBaseline='top';
+    (el.text||'').split('\n').forEach((line,i)=>ctx.fillText(line,x,y+i*fs*1.4));
+  } else if(t==='image'&&el.src){
+    if(!EC.imgCache.has(el.id)){
+      const img=new Image();
+      img.onload=()=>{EC.imgCache.set(el.id,img);ecRender();};
+      img.src=el.src;
+    } else ctx.drawImage(EC.imgCache.get(el.id),x,y,w,h);
+  }
+}
+
+function ecBBox(el){
+  if(el.type==='arrow'||el.type==='line'){
+    const x2=el.x2??el.x,y2=el.y2??el.y;
+    return {x:Math.min(el.x,x2),y:Math.min(el.y,y2),w:Math.abs(x2-el.x),h:Math.abs(y2-el.y)};
+  }
+  if(el.type==='pencil'&&el.points?.length){
+    const xs=el.points.map(p=>p[0]),ys=el.points.map(p=>p[1]);
+    const x=Math.min(...xs),y=Math.min(...ys);
+    return {x,y,w:Math.max(...xs)-x,h:Math.max(...ys)-y};
+  }
+  return {x:el.x,y:el.y,w:el.w||0,h:el.h||0};
+}
+
+function ecSelBox(ctx,el){
+  const bb=ecBBox(el);
+  const {x:sx,y:sy}=ecToS(bb.x,bb.y);
+  const sw=bb.w*EC.zoom, sh=bb.h*EC.zoom;
+  const pad=6;
+  ctx.save();
+  ctx.strokeStyle='#38bdf8'; ctx.lineWidth=1.5; ctx.setLineDash([4,2]);
+  ctx.strokeRect(sx-pad,sy-pad,sw+pad*2,sh+pad*2);
+  ctx.setLineDash([]);
+  const handles=[[sx-pad,sy-pad],[sx+sw/2,sy-pad],[sx+sw+pad,sy-pad],
+    [sx+sw+pad,sy+sh/2],[sx+sw+pad,sy+sh+pad],[sx+sw/2,sy+sh+pad],
+    [sx-pad,sy+sh+pad],[sx-pad,sy+sh/2]];
+  handles.forEach(([hx,hy])=>{
+    ctx.fillStyle='#0f172a'; ctx.strokeStyle='#38bdf8'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(hx,hy,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function ecHitHandle(sx,sy){
+  for(const id of EC.selIds){
+    const el=EC.els.find(e=>e.id===id); if(!el) continue;
+    const bb=ecBBox(el);
+    const {x:bsx,y:bsy}=ecToS(bb.x,bb.y);
+    const bsw=bb.w*EC.zoom, bsh=bb.h*EC.zoom, pad=6;
+    const pts=[
+      ['nw',bsx-pad,bsy-pad],['n',bsx+bsw/2,bsy-pad],['ne',bsx+bsw+pad,bsy-pad],
+      ['e',bsx+bsw+pad,bsy+bsh/2],
+      ['se',bsx+bsw+pad,bsy+bsh+pad],['s',bsx+bsw/2,bsy+bsh+pad],
+      ['sw',bsx-pad,bsy+bsh+pad],['w',bsx-pad,bsy+bsh/2],
+    ];
+    for(const[name,hx,hy] of pts) if(Math.hypot(sx-hx,sy-hy)<=8) return {name,el};
+  }
+  return null;
+}
+
+function ecHit(el,cx,cy){
+  const t=6/EC.zoom;
+  if(el.type==='arrow'||el.type==='line') return ecSegDist(cx,cy,el.x,el.y,el.x2??el.x,el.y2??el.y)<t;
+  if(el.type==='pencil'){
+    if(!el.points?.length) return false;
+    for(let i=0;i<el.points.length-1;i++) if(ecSegDist(cx,cy,el.points[i][0],el.points[i][1],el.points[i+1][0],el.points[i+1][1])<t) return true;
+    return false;
+  }
+  const bb=ecBBox(el);
+  if(el.type==='ellipse'){
+    const rx=bb.w/2+t,ry=bb.h/2+t,dx=cx-(bb.x+bb.w/2),dy=cy-(bb.y+bb.h/2);
+    return (dx*dx)/(rx*rx)+(dy*dy)/(ry*ry)<=1;
+  }
+  return cx>=bb.x-t&&cx<=bb.x+bb.w+t&&cy>=bb.y-t&&cy<=bb.y+bb.h+t;
+}
+function ecSegDist(px,py,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1;
+  if(!dx&&!dy) return Math.hypot(px-x1,py-y1);
+  const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/(dx*dx+dy*dy)));
+  return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+}
+
+// ── Event handlers ────────────────────────────────────────
+function ecDown(e){
+  if(e.button!==0) return;
+  const cvs=document.getElementById('ec-canvas');
+  const{x:cx,y:cy}=ecToC(e.clientX,e.clientY);
+  const r=cvs.getBoundingClientRect();
+  const sx=e.clientX-r.left, sy=e.clientY-r.top;
+  if(EC.state==='textediting') ecEndText();
+
+  if(EC.tool==='hand'){
+    EC.state='panning'; EC.panSnap={x:e.clientX,y:e.clientY,vx:EC.vx,vy:EC.vy};
+    cvs.style.cursor='grabbing'; return;
+  }
+  if(EC.tool==='eraser'){
+    const hit=[...EC.els].reverse().find(el=>ecHit(el,cx,cy));
+    if(hit){EC.els=EC.els.filter(e=>e.id!==hit.id);EC.selIds.delete(hit.id);ecRender();ecSave();} return;
+  }
+  if(EC.tool==='select'){
+    const hdl=ecHitHandle(sx,sy);
+    if(hdl){
+      EC.state='resizing'; EC.resizeHandle=hdl.name; EC.resizeEl=hdl.el;
+      EC.resizeSnap=JSON.parse(JSON.stringify(hdl.el));
+      EC.startCx=cx; EC.startCy=cy; return;
+    }
+    const hit=[...EC.els].reverse().find(el=>ecHit(el,cx,cy));
+    if(hit){
+      if(!e.shiftKey) EC.selIds=new Set([hit.id]); else EC.selIds.add(hit.id);
+      EC.state='moving'; EC.startCx=cx; EC.startCy=cy;
+      EC.dragSnap=EC.els.filter(el=>EC.selIds.has(el.id)).map(el=>JSON.parse(JSON.stringify(el)));
+    } else { EC.selIds=new Set(); }
+    ecRender(); return;
+  }
+  if(EC.tool==='text'){ecStartText(cx,cy,sx,sy); return;}
+  if(EC.tool==='image'){
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    inp.onchange=()=>{
+      const file=inp.files[0]; if(!file) return;
+      const fr=new FileReader();
+      fr.onload=ev=>{
+        const img=new Image();
+        img.onload=()=>{
+          let w=img.width,h=img.height;
+          const m=Math.max(w,h);
+          if(m>400){w=w/m*400;h=h/m*400;}
+          const el={id:ecUid(),type:'image',x:cx,y:cy,w,h,src:ev.target.result,strokeColor:EC.strokeColor,strokeWidth:0,fillColor:'transparent'};
+          EC.imgCache.set(el.id,img); EC.els.push(el); EC.selIds=new Set([el.id]);
+          ecRender(); ecSave();
+        }; img.src=ev.target.result;
+      }; fr.readAsDataURL(file);
+    }; inp.click(); return;
+  }
+  // shape / line / pencil drawing
+  EC.state='drawing'; EC.startCx=cx; EC.startCy=cy;
+  if(EC.tool==='pencil'){
+    EC.curEl={id:ecUid(),type:'pencil',points:[[cx,cy]],strokeColor:EC.strokeColor,strokeWidth:EC.strokeWidth,fillColor:'transparent'};
+  } else if(EC.tool==='arrow'||EC.tool==='line'){
+    EC.curEl={id:ecUid(),type:EC.tool,x:cx,y:cy,x2:cx,y2:cy,strokeColor:EC.strokeColor,strokeWidth:EC.strokeWidth,fillColor:'transparent'};
+  } else {
+    EC.curEl={id:ecUid(),type:EC.tool,x:cx,y:cy,w:0,h:0,strokeColor:EC.strokeColor,strokeWidth:EC.strokeWidth,fillColor:EC.fillColor};
+  }
+}
+
+function ecMove(e){
+  const{x:cx,y:cy}=ecToC(e.clientX,e.clientY);
+  const cvs=document.getElementById('ec-canvas');
+  const r=cvs.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+
+  if(EC.state==='panning'){
+    EC.vx=EC.panSnap.vx+(e.clientX-EC.panSnap.x);
+    EC.vy=EC.panSnap.vy+(e.clientY-EC.panSnap.y);
+    ecRender(); return;
+  }
+  if(EC.state==='moving'){
+    const dx=cx-EC.startCx,dy=cy-EC.startCy;
+    EC.dragSnap.forEach(snap=>{
+      const el=EC.els.find(e=>e.id===snap.id); if(!el) return;
+      if(el.type==='pencil') el.points=snap.points.map(([px,py])=>[px+dx,py+dy]);
+      else if(el.type==='arrow'||el.type==='line'){el.x=snap.x+dx;el.y=snap.y+dy;el.x2=(snap.x2??snap.x)+dx;el.y2=(snap.y2??snap.y)+dy;}
+      else{el.x=snap.x+dx;el.y=snap.y+dy;}
+    });
+    ecRender(); return;
+  }
+  if(EC.state==='resizing'&&EC.resizeEl){
+    const el=EC.resizeEl,sn=EC.resizeSnap;
+    const dx=cx-EC.startCx,dy=cy-EC.startCy;
+    const H=EC.resizeHandle;
+    if(el.type==='arrow'||el.type==='line'){
+      if(H==='nw'||H==='w'||H==='sw'){el.x=sn.x+dx;el.y=sn.y+dy;}
+      else{el.x2=(sn.x2??sn.x)+dx;el.y2=(sn.y2??sn.y)+dy;}
+    } else {
+      if(H.includes('e')) el.w=Math.max(4,sn.w+dx);
+      if(H.includes('s')) el.h=Math.max(4,sn.h+dy);
+      if(H.includes('w')){el.x=sn.x+dx;el.w=Math.max(4,sn.w-dx);}
+      if(H.includes('n')){el.y=sn.y+dy;el.h=Math.max(4,sn.h-dy);}
+    }
+    ecRender(); return;
+  }
+  if(EC.state==='drawing'&&EC.curEl){
+    if(EC.tool==='pencil') EC.curEl.points.push([cx,cy]);
+    else if(EC.tool==='arrow'||EC.tool==='line'){EC.curEl.x2=cx;EC.curEl.y2=cy;}
+    else{
+      EC.curEl.x=Math.min(cx,EC.startCx); EC.curEl.y=Math.min(cy,EC.startCy);
+      EC.curEl.w=Math.abs(cx-EC.startCx); EC.curEl.h=Math.abs(cy-EC.startCy);
+    }
+    ecRender(); return;
+  }
+  // cursor hint
+  if(EC.tool==='select'){
+    const hdl=ecHitHandle(sx,sy);
+    if(hdl){const cm={nw:'nw-resize',ne:'ne-resize',se:'se-resize',sw:'sw-resize',n:'n-resize',s:'s-resize',e:'e-resize',w:'w-resize'};cvs.style.cursor=cm[hdl.name]||'pointer';}
+    else{ const hit=[...EC.els].reverse().find(el=>ecHit(el,cx,cy));cvs.style.cursor=hit?'move':'default'; }
+  }
+}
+
+function ecUp(e){
+  if(EC.state==='panning'){EC.state='idle';document.getElementById('ec-canvas').style.cursor='grab';return;}
+  if(EC.state==='moving'){EC.state='idle';ecSave();return;}
+  if(EC.state==='resizing'){EC.state='idle';EC.resizeEl=null;ecSave();return;}
+  if(EC.state==='drawing'&&EC.curEl){
+    EC.state='idle';
+    const el=EC.curEl; EC.curEl=null;
+    let ok=true;
+    if(el.type==='pencil') ok=el.points.length>3;
+    else if(el.type==='arrow'||el.type==='line') ok=Math.hypot((el.x2??0)-el.x,(el.y2??0)-el.y)>4;
+    else ok=el.w>4||el.h>4;
+    if(ok){EC.els.push(el);EC.selIds=new Set([el.id]);ecSave();}
+    ecRender();
+  }
+}
+
+function ecWheel(e){
+  e.preventDefault();
+  const r=e.currentTarget.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  const factor=e.deltaY>0?0.9:1.1;
+  const nz=Math.max(0.1,Math.min(8,EC.zoom*factor));
+  EC.vx=sx-(sx-EC.vx)*(nz/EC.zoom);
+  EC.vy=sy-(sy-EC.vy)*(nz/EC.zoom);
+  EC.zoom=nz; ecRender();
+}
+
+// ── Text ──────────────────────────────────────────────────
+function ecStartText(cx,cy,sx,sy){
+  const inp=document.getElementById('ec-text-input');
+  const hit=[...EC.els].reverse().find(el=>el.type==='text'&&ecHit(el,cx,cy));
+  EC.state='textediting';
+  if(hit){
+    EC.curEl=hit; inp.value=hit.text||'';
+  } else {
+    EC.curEl={id:ecUid(),type:'text',x:cx,y:cy,w:0,h:0,text:'',strokeColor:EC.strokeColor,fontSize:EC.fontSize,fontFamily:"'Inter',sans-serif"};
+    inp.value='';
+  }
+  inp.style.fontSize=(EC.fontSize*EC.zoom)+'px';
+  inp.style.color=EC.curEl.strokeColor||EC.strokeColor;
+  const pos=ecToS(EC.curEl.x,EC.curEl.y);
+  inp.style.left=pos.x+'px'; inp.style.top=pos.y+'px';
+  inp.style.display='block'; inp.style.height='auto'; inp.style.width='160px';
+  inp.focus(); inp.select();
+  inp.oninput=()=>{inp.style.height='auto';inp.style.height=inp.scrollHeight+'px';inp.style.width='auto';inp.style.width=Math.max(160,inp.scrollWidth+20)+'px';};
+}
+function ecEndText(){
+  const inp=document.getElementById('ec-text-input'); if(!inp||!EC.curEl) return;
+  const txt=inp.value;
+  inp.style.display='none';
+  if(txt.trim()){
+    EC.curEl.text=txt;
+    const existing=EC.els.find(e=>e.id===EC.curEl.id);
+    if(existing) Object.assign(existing,EC.curEl); else EC.els.push(EC.curEl);
+    EC.selIds=new Set([EC.curEl.id]); ecSave();
+  }
+  EC.curEl=null; EC.state='idle'; ecRender();
+}
+
+// ── Tool selection ─────────────────────────────────────────
+function ecSetTool(tool){
+  if(EC.state==='textediting') ecEndText();
+  EC.tool=tool;
+  document.querySelectorAll('.ec-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+  const cvs=document.getElementById('ec-canvas'); if(!cvs) return;
+  const curs={select:'default',hand:'grab',text:'text',eraser:'cell'};
+  cvs.style.cursor=curs[tool]||'crosshair';
+}
+
+function ecClear(){
+  if(!EC.nodeId) return;
+  if(!confirm('Clear all drawings for this node?')) return;
+  EC.els=[]; EC.selIds=new Set(); ecRender(); ecSave();
+}
+
+// ── Setup (called once) ────────────────────────────────────
+function ecSetup(){
+  const cvs=document.getElementById('ec-canvas'); if(!cvs) return;
+  cvs.addEventListener('mousedown',ecDown);
+  cvs.addEventListener('mousemove',ecMove);
+  cvs.addEventListener('mouseup',  ecUp);
+  cvs.addEventListener('mouseleave',()=>{if(EC.state==='drawing'){ecUp({});} });
+  cvs.addEventListener('wheel',ecWheel,{passive:false});
+  cvs.addEventListener('dblclick',e=>{
+    const{x:cx,y:cy}=ecToC(e.clientX,e.clientY);
+    const r=e.currentTarget.getBoundingClientRect();
+    const hit=[...EC.els].reverse().find(el=>el.type==='text'&&ecHit(el,cx,cy));
+    if(hit){EC.selIds=new Set([hit.id]);ecStartText(hit.x,hit.y,0,0);}
+    else if(EC.tool!=='text'&&EC.tool!=='eraser'&&EC.tool!=='image'){ecSetTool('text');ecStartText(cx,cy,0,0);}
+  });
+  // Toolbar buttons
+  document.querySelectorAll('.ec-tool').forEach(btn=>{
+    btn.addEventListener('click',()=>ecSetTool(btn.dataset.tool));
+  });
+  // Stroke swatches
+  document.querySelectorAll('.ec-swatch').forEach(sw=>{
+    sw.addEventListener('click',()=>{
+      EC.strokeColor=sw.dataset.color;
+      document.querySelectorAll('.ec-swatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+      // apply to selected
+      EC.selIds.forEach(id=>{const el=EC.els.find(e=>e.id===id);if(el){el.strokeColor=EC.strokeColor;}});
+      ecRender(); if(EC.selIds.size) ecSave();
+    });
+  });
+  // Fill swatches
+  document.querySelectorAll('.ec-fswatch').forEach(sw=>{
+    sw.addEventListener('click',()=>{
+      EC.fillColor=sw.dataset.fill;
+      document.querySelectorAll('.ec-fswatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+      EC.selIds.forEach(id=>{const el=EC.els.find(e=>e.id===id);if(el)el.fillColor=EC.fillColor;});
+      ecRender(); if(EC.selIds.size) ecSave();
+    });
+  });
+  // Stroke width
+  document.getElementById('ec-stroke-width').addEventListener('change',e=>{
+    EC.strokeWidth=parseInt(e.target.value)||2;
+    EC.selIds.forEach(id=>{const el=EC.els.find(el=>el.id===id);if(el)el.strokeWidth=EC.strokeWidth;});
+    ecRender(); if(EC.selIds.size) ecSave();
+  });
+  // Keyboard
+  document.addEventListener('keydown',e=>{
+    if(EC.state==='textediting'){if(e.key==='Escape')ecEndText();return;}
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+    if(currentTheme!=='explorer') return;
+    const map={v:'select',h:'hand',r:'rect',d:'diamond',o:'ellipse',a:'arrow',l:'line',p:'pencil',t:'text',e:'eraser',i:'image'};
+    if(map[e.key.toLowerCase()]&&!e.ctrlKey&&!e.metaKey){ecSetTool(map[e.key.toLowerCase()]);}
+    if((e.key==='Delete'||e.key==='Backspace')&&EC.selIds.size){
+      EC.els=EC.els.filter(el=>!EC.selIds.has(el.id));EC.selIds=new Set();ecRender();ecSave();e.preventDefault();
+    }
+    if(e.key==='Escape'){EC.selIds=new Set();ecRender();}
+  });
+  // Text input
+  const ti=document.getElementById('ec-text-input');
+  if(ti){
+    ti.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();ecEndText();}});
+    ti.addEventListener('blur',()=>{setTimeout(()=>{if(EC.state==='textediting')ecEndText();},100);});
+  }
+  window.addEventListener('resize',()=>{if(EC.nodeId)ecRender();});
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPLORER VIEW
+// ══════════════════════════════════════════════════════════════
+
+// Per-node canvas state for explorer (nodeId → {els, selId})
+const expState = new Map();
+let expSelNodeId = null;   // currently selected node in explorer
+
+function expGetState(nodeId) {
+  if (!expState.has(nodeId)) expState.set(nodeId, { els: [], selId: null });
+  return expState.get(nodeId);
+}
+
+// ── Tree rendering ──────────────────────────────────────────
+let _expSearchQ = '';
+document.getElementById('exp-search').addEventListener('input', e => {
+  _expSearchQ = e.target.value.toLowerCase();
+  expRenderTree();
+});
+
+function expMatches(n) {
+  return !_expSearchQ || n.name.toLowerCase().includes(_expSearchQ);
+}
+function expVisible(n) {
+  if (n.mapHidden) return false;
+  if (expMatches(n)) return true;
+  return kids(n.id).some(c => expVisible(c));
+}
+
+function expRenderTree() {
+  const host = document.getElementById('exp-tree-container');
+  if (!host) return;
+  const roots = nodes.filter(n => !n.parentId && !n.mapHidden && expVisible(n));
+  host.innerHTML = '';
+  roots.forEach(n => host.appendChild(expMkRow(n, 0)));
+  // stats
+  document.getElementById('exp-stat-nodes').textContent = nodes.filter(n => !n.mapHidden).length;
+  document.getElementById('exp-stat-imgs').textContent  = nodes.reduce((a,n)=>(a+(n.images||[]).length+(n.canvasData?.elements?.filter(e=>e.type==='image')||[]).length),0);
+  const depth = (n,d=0) => kids(n.id).reduce((m,c)=>Math.max(m,depth(c,d+1)),d);
+  const roots2 = nodes.filter(n=>!n.parentId);
+  document.getElementById('exp-stat-depth').textContent = roots2.length ? Math.max(...roots2.map(r=>depth(r))) : 0;
+}
+
+function expMkRow(node, dep) {
+  const frag = document.createDocumentFragment();
+  const ch = kids(node.id).filter(c => !c.mapHidden && expVisible(c));
+  const isOpen = !!node.open;
+  const isSel  = node.id === expSelNodeId;
+
+  // row
+  const row = document.createElement('div');
+  row.className = 'node-row' + (isSel ? ' selected' : '') + (isOpen ? ' open' : '');
+  row.dataset.id = node.id;
+  row.style.paddingLeft = (dep * 17 + 8) + 'px';
+
+  // toggle arrow
+  if (ch.length || kids(node.id).length) {
+    const tog = document.createElement('span');
+    tog.className = 'node-toggle';
+    tog.innerHTML = `<svg class="toggle-arrow" viewBox="0 0 6 10"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`;
+    tog.addEventListener('click', e => {
+      e.stopPropagation();
+      node.open = !node.open;
+      expRenderTree();
+    });
+    row.appendChild(tog);
+  } else {
+    const sp = document.createElement('span');
+    sp.className = 'no-toggle';
+    row.appendChild(sp);
+  }
+
+  // dot
+  const dot = document.createElement('span');
+  dot.className = 'node-dot';
+  dot.style.background = node.color || '#38bdf8';
+  dot.style.boxShadow = '0 0 5px ' + (node.color || '#38bdf8');
+  row.appendChild(dot);
+
+  // label
+  const lw = document.createElement('span');
+  lw.className = 'node-label-wrap';
+  const lbl = document.createElement('span');
+  lbl.className = 'node-label';
+  lbl.textContent = node.name;
+  if (node.color) lbl.style.setProperty('--nc', node.color);
+  lw.appendChild(lbl);
+
+  // canvas badge
+  const cEls = node.canvasData?.elements?.length;
+  if (cEls) {
+    const b = document.createElement('span');
+    b.className = 'img-badge';
+    b.style.cssText = 'background:rgba(56,189,248,.15);color:#38bdf8;padding:1px 4px;border-radius:3px;margin-left:3px;';
+    b.textContent = cEls + '▣';
+    lw.appendChild(b);
+  }
+  row.appendChild(lw);
+
+  row.addEventListener('click', () => expSelectNode(node.id));
+  row.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    selectNode(node.id);   // sync main sel for ctx menu
+    const m = document.getElementById('ctx-menu');
+    const hideEl = document.getElementById('ctx-hide');
+    if (hideEl) hideEl.textContent = node.mapHidden ? '👁 Show node' : '👁 Hide node';
+    m.style.display = 'block';
+    m.style.left = Math.min(e.clientX, window.innerWidth - 170) + 'px';
+    m.style.top  = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+  });
+
+  frag.appendChild(row);
+
+  // children
+  if (isOpen && ch.length) {
+    const wrap = document.createElement('div');
+    wrap.className = 'children-wrap open';
+    const inner = document.createElement('div');
+    inner.className = 'children-inner';
+    ch.forEach(c => inner.appendChild(expMkRow(c, dep + 1)));
+    wrap.appendChild(inner);
+    frag.appendChild(wrap);
+  }
+
+  const container = document.createElement('div');
+  container.appendChild(frag);
+  return container;
+}
+
+// ── Node selection ──────────────────────────────────────────
+function expSelectNode(nodeId) {
+  expSelNodeId = nodeId;
+  selectNode(nodeId);
+  expRenderTree();
+  ecInit(nodeId);
+  expLoadProps(nodeId);
+  expSwitchTab('props');
+  // update left-panel breadcrumb + middle-panel title
+  const crumbs = ancestors(nodeId);
+  const bc = document.getElementById('exp-breadcrumb');
+  if (bc) {
+    if (crumbs.length) {
+      bc.innerHTML = crumbs.map((c, i) =>
+        i < crumbs.length - 1
+          ? `<span style="cursor:pointer;color:var(--text3)" onclick="expSelectNode('${c.id}')">${c.name}</span><span class="bc-sep">›</span>`
+          : `<span class="bc-cur">${c.name}</span>`
+      ).join('');
+    } else {
+      bc.innerHTML = '<span style="color:var(--text3)">Select a node</span>';
+    }
+  }
+  const midTitle = document.getElementById('exp-mid-title');
+  if (midTitle) {
+    midTitle.innerHTML = crumbs.map((c, i) =>
+      i < crumbs.length - 1
+        ? `<span style="color:var(--text3);cursor:pointer" onclick="expSelectNode('${c.id}')">${c.name}</span><span class="bc-sep" style="margin:0 4px">›</span>`
+        : `<span style="color:var(--text)">${c.name}</span>`
+    ).join('');
+  }
+}
+
+// ── Canvas (middle panel) — replaced by EC drawing engine ────
+// (expLoadCanvas, expRenderEl, expSelect, expDeselect, expDeleteEl,
+//  expSave, expAddEl, expClearCanvas, expTblAddRow, expTblAddCol,
+//  expStartDrag, expStartResize removed — see EC module above)
+
+function _expCanvasStub(nodeId) {
+  const node = byId(nodeId);
+  const host = document.getElementById('exp-canvas-host');
+  const empty = document.getElementById('exp-empty-state');
+  const titleEl = document.getElementById('exp-mid-title');
+
+  if (!node) {
+    host.innerHTML = '';
+    if (empty) empty.style.display = 'flex';
+    if (titleEl) titleEl.textContent = 'Select a node to view its canvas';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+  if (titleEl) titleEl.textContent = node.name;
+
+  // migrate legacy desc → canvas
+  if (node.desc && node.desc.trim() && !node.canvasData?.elements?.length) {
+    node.canvasData = { version: 1, elements: [{ id: tncUid(), type: 'text', x: 20, y: 20, w: 440, h: 200, content: node.desc }] };
+    node.desc = '';
+    save();
+  }
+
+  const st = expGetState(nodeId);
+  st.els = node.canvasData?.elements ? JSON.parse(JSON.stringify(node.canvasData.elements)) : [];
+  st.selId = null;
+
+  host.innerHTML = '';
+  if (st.els.length === 0) {
+    const hint = document.createElement('div');
+    hint.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#2d3148;font-size:12px;pointer-events:none;user-select:none;';
+    hint.textContent = 'Use toolbar above to add text, tables, or images';
+    host.appendChild(hint);
+  } else {
+    st.els.forEach(el => expRenderEl(nodeId, el));
+  }
+}
+
+function expRenderEl(nodeId, el) {
+  const host = document.getElementById('exp-canvas-host');
+  if (!host) return;
+
+  const div = document.createElement('div');
+  div.id = el.id;
+  div.className = 'ic-el';
+  div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;`;
+
+  // Header (shown when selected)
+  const hdr = document.createElement('div');
+  hdr.className = 'ic-hdr';
+  const typeLabel = { text: '✏ Text', table: '⊞ Table', image: '🖼 Image' }[el.type] || el.type;
+  hdr.innerHTML = `<span style="font-size:10px;color:var(--text3);">${typeLabel}</span><span class="ic-hdr-spacer"></span><button class="ic-hdr-del" onclick="expDeleteEl('${nodeId}','${el.id}')">✕</button>`;
+  div.appendChild(hdr);
+
+  if (el.type === 'text') {
+    // Formatting strip
+    const fmt = document.createElement('div');
+    fmt.className = 'tnc-fmt-strip';
+    fmt.innerHTML = `
+      <button class="tnc-fb" title="Bold" onmousedown="e=>{e.preventDefault();document.execCommand('bold')}">B</button>
+      <button class="tnc-fb" title="Italic" style="font-style:italic" onmousedown="e=>{e.preventDefault();document.execCommand('italic')}">I</button>
+      <select class="tnc-fs" onchange="document.execCommand('fontSize',false,this.value)">
+        ${[1,2,3,4,5,6,7].map(s=>`<option value="${s}"${s===3?' selected':''}>S${s}</option>`).join('')}
+      </select>
+      ${['#38bdf8','#f87171','#34d399','#fb923c','#f472b6','#a78bfa','#fff','#64748b'].map(c=>
+        `<button class="tnc-fc" style="background:${c}" title="${c}" onmousedown="event.preventDefault();document.execCommand('foreColor',false,'${c}')"></button>`
+      ).join('')}`;
+    div.appendChild(fmt);
+
+    const body = document.createElement('div');
+    body.className = 'ic-text-body';
+    body.contentEditable = 'false';
+    body.innerHTML = el.content || '';
+    body.addEventListener('input', () => { el.content = body.innerHTML; expSave(nodeId); });
+    body.addEventListener('mousedown', e => { expSelect(nodeId, el.id); e.stopPropagation(); });
+    div.appendChild(body);
+
+  } else if (el.type === 'table') {
+    const ctrl = document.createElement('div');
+    ctrl.className = 'ic-tbl-ctrl';
+    ctrl.innerHTML = `
+      <button class="tb-btn" style="font-size:9px;padding:1px 5px" onmousedown="expTblAddRow('${nodeId}','${el.id}');event.stopPropagation()">+Row</button>
+      <button class="tb-btn" style="font-size:9px;padding:1px 5px" onmousedown="expTblAddCol('${nodeId}','${el.id}');event.stopPropagation()">+Col</button>`;
+    div.appendChild(ctrl);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'ic-tbl-wrap';
+    const tbl = document.createElement('table');
+    tbl.className = 'ic-table';
+
+    const thead = document.createElement('thead');
+    const hrow = document.createElement('tr');
+    (el.headers || []).forEach((h, ci) => {
+      const th = document.createElement('th');
+      th.contentEditable = 'true';
+      th.textContent = h;
+      th.addEventListener('input', () => { el.headers[ci] = th.textContent; expSave(nodeId); });
+      th.addEventListener('mousedown', e => { expSelect(nodeId, el.id); e.stopPropagation(); });
+      hrow.appendChild(th);
+    });
+    thead.appendChild(hrow);
+    tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    (el.rows || []).forEach((row, ri) => {
+      const tr = document.createElement('tr');
+      row.forEach((cell, ci) => {
+        const td = document.createElement('td');
+        td.contentEditable = 'true';
+        td.textContent = cell;
+        td.addEventListener('input', () => { el.rows[ri][ci] = td.textContent; expSave(nodeId); });
+        td.addEventListener('mousedown', e => { expSelect(nodeId, el.id); e.stopPropagation(); });
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+    div.appendChild(wrap);
+
+  } else if (el.type === 'image') {
+    const img = document.createElement('div');
+    img.className = 'ic-img-body';
+    img.style.cssText = 'height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+    const i = document.createElement('img');
+    i.src = el.src || '';
+    i.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;';
+    img.appendChild(i);
+    img.addEventListener('mousedown', e => { expSelect(nodeId, el.id); e.stopPropagation(); });
+    div.appendChild(img);
+  }
+
+  // Resize handle
+  const rsz = document.createElement('div');
+  rsz.className = 'ic-resize';
+  rsz.addEventListener('mousedown', e => { expStartResize(e, nodeId, el, div); });
+  div.appendChild(rsz);
+
+  // Drag (header area)
+  div.addEventListener('mousedown', e => {
+    expSelect(nodeId, el.id);
+    if (e.target.closest('.ic-hdr') || e.target === div) {
+      expStartDrag(e, nodeId, el, div);
+    }
+  });
+
+  // Apply TNC view-mode CSS (same as tnc-canvas elements)
+  div.style.position = 'absolute';
+  host.appendChild(div);
+}
+
+function expSelect(nodeId, id) {
+  const st = expGetState(nodeId);
+  if (st.selId === id) return;
+  if (st.selId) {
+    const old = document.getElementById(st.selId);
+    if (old) {
+      old.classList.remove('ic-sel');
+      const tb = old.querySelector('.ic-text-body');
+      if (tb) tb.contentEditable = 'false';
+    }
+  }
+  st.selId = id;
+  if (id) {
+    const d = document.getElementById(id);
+    if (d) {
+      d.classList.add('ic-sel');
+      const tb = d.querySelector('.ic-text-body');
+      if (tb) tb.contentEditable = 'true';
+    }
+  }
+}
+
+function expDeselect() {
+  if (!expSelNodeId) return;
+  expSelect(expSelNodeId, null);
+}
+
+// (exp-canvas-host removed — EC canvas handles clicks directly)
+
+function expDeleteEl(nodeId, elId) {
+  const st = expGetState(nodeId);
+  st.els = st.els.filter(e => e.id !== elId);
+  const d = document.getElementById(elId);
+  if (d) d.remove();
+  if (st.selId === elId) st.selId = null;
+  expSave(nodeId);
+}
+
+function expSave(nodeId) {
+  const node = byId(nodeId);
+  if (!node) return;
+  const st = expGetState(nodeId);
+  node.canvasData = { version: 1, elements: JSON.parse(JSON.stringify(st.els)) };
+  node.dateModified = new Date().toISOString();
+  // sync TNC canvas if expanded
+  tncReload(nodeId, node.canvasData);
+  // sync IC panel if this node is selected
+  if (sel === nodeId) icLoad(nodeId);
+  save();
+}
+
+function expAddEl(type) {
+  if (!expSelNodeId) { setStatus('Select a node first'); return; }
+  const node = byId(expSelNodeId);
+  if (!node) return;
+  const st = expGetState(expSelNodeId);
+  const host = document.getElementById('exp-canvas-host');
+  const scrollX = document.getElementById('exp-mid-body')?.scrollLeft || 0;
+  const scrollY = document.getElementById('exp-mid-body')?.scrollTop  || 0;
+
+  let el;
+  if (type === 'text') {
+    el = { id: tncUid(), type: 'text', x: 20 + scrollX, y: 20 + scrollY, w: 360, h: 160, content: '' };
+  } else if (type === 'table') {
+    const cols = 3, rows = 3;
+    el = { id: tncUid(), type: 'table', x: 20 + scrollX, y: 20 + scrollY, w: cols * 100 + 20, h: rows * 28 + 56,
+           headers: Array.from({length: cols}, (_, i) => 'Col ' + (i + 1)),
+           rows: Array.from({length: rows}, () => Array(cols).fill('')) };
+  } else if (type === 'image') {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = () => {
+      const file = inp.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const imgEl = { id: tncUid(), type: 'image', x: 20 + scrollX, y: 20 + scrollY, w: 300, h: 200, src: ev.target.result };
+        const hint = host.querySelector('div[style*="pointer-events:none"]');
+        if (hint) hint.remove();
+        st.els.push(imgEl);
+        expRenderEl(expSelNodeId, imgEl);
+        expSelect(expSelNodeId, imgEl.id);
+        expSave(expSelNodeId);
+      };
+      reader.readAsDataURL(file);
+    };
+    inp.click();
+    return;
+  }
+
+  const hint = host.querySelector('div[style*="pointer-events:none"]');
+  if (hint) hint.remove();
+  st.els.push(el);
+  expRenderEl(expSelNodeId, el);
+  expSelect(expSelNodeId, el.id);
+  expSave(expSelNodeId);
+}
+
+function expClearCanvas() {
+  if (!expSelNodeId) return;
+  if (!confirm('Clear all canvas elements for this node?')) return;
+  const st = expGetState(expSelNodeId);
+  st.els = [];
+  st.selId = null;
+  expLoadCanvas(expSelNodeId);
+  expSave(expSelNodeId);
+}
+
+// Table helpers
+function expTblAddRow(nodeId, elId) {
+  const st = expGetState(nodeId);
+  const el = st.els.find(e => e.id === elId);
+  if (!el) return;
+  const cols = (el.headers || []).length;
+  el.rows.push(Array(cols).fill(''));
+  el.h += 28;
+  const d = document.getElementById(elId);
+  if (d) { d.style.height = el.h + 'px'; }
+  // re-render table body
+  const tbody = d?.querySelector('tbody');
+  if (tbody) {
+    const ri = el.rows.length - 1;
+    const tr = document.createElement('tr');
+    el.rows[ri].forEach((cell, ci) => {
+      const td = document.createElement('td');
+      td.contentEditable = 'true';
+      td.textContent = cell;
+      td.addEventListener('input', () => { el.rows[ri][ci] = td.textContent; expSave(nodeId); });
+      td.addEventListener('mousedown', e => { expSelect(nodeId, elId); e.stopPropagation(); });
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  expSave(nodeId);
+}
+
+function expTblAddCol(nodeId, elId) {
+  const st = expGetState(nodeId);
+  const el = st.els.find(e => e.id === elId);
+  if (!el) return;
+  const ci = el.headers.length;
+  el.headers.push('Col ' + (ci + 1));
+  el.rows.forEach(r => r.push(''));
+  el.w += 100;
+  const d = document.getElementById(elId);
+  if (d) { d.style.width = el.w + 'px'; }
+  const thead = d?.querySelector('thead tr');
+  if (thead) {
+    const th = document.createElement('th');
+    th.contentEditable = 'true';
+    th.textContent = el.headers[ci];
+    th.addEventListener('input', () => { el.headers[ci] = th.textContent; expSave(nodeId); });
+    th.addEventListener('mousedown', e => { expSelect(nodeId, elId); e.stopPropagation(); });
+    thead.appendChild(th);
+  }
+  const rows = d?.querySelectorAll('tbody tr') || [];
+  rows.forEach((tr, ri) => {
+    const td = document.createElement('td');
+    td.contentEditable = 'true';
+    td.textContent = '';
+    td.addEventListener('input', () => { el.rows[ri][ci] = td.textContent; expSave(nodeId); });
+    td.addEventListener('mousedown', e => { expSelect(nodeId, elId); e.stopPropagation(); });
+    tr.appendChild(td);
+  });
+  expSave(nodeId);
+}
+
+// Drag
+function expStartDrag(e, nodeId, el, div) {
+  e.preventDefault();
+  const ox = e.clientX - el.x, oy = e.clientY - el.y;
+  const onMove = me => {
+    el.x = me.clientX - ox;
+    el.y = me.clientY - oy;
+    div.style.left = el.x + 'px';
+    div.style.top  = el.y + 'px';
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    expSave(nodeId);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
+}
+
+// Resize
+function expStartResize(e, nodeId, el, div) {
+  e.preventDefault(); e.stopPropagation();
+  const sx = e.clientX, sy = e.clientY, sw = el.w, sh = el.h;
+  const onMove = me => {
+    el.w = Math.max(120, sw + me.clientX - sx);
+    el.h = Math.max(80,  sh + me.clientY - sy);
+    div.style.width  = el.w + 'px';
+    div.style.height = el.h + 'px';
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    expSave(nodeId);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
+}
+
+// ── Properties pane ─────────────────────────────────────────
+function expLoadProps(nodeId) {
+  const pane = document.getElementById('exp-props-pane');
+  if (!pane) return;
+  const node = byId(nodeId);
+  if (!node) { pane.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">No node selected</div>'; return; }
+
+  pane.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em">Name</div>
+        <input id="exp-prop-name" value="${node.name.replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:5px 8px;font-size:12px;outline:none;font-family:inherit;box-sizing:border-box;">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">Color</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          ${PAL.map(c=>`<button onclick="expSetColor('${c}')" style="width:18px;height:18px;border-radius:50%;background:${c};border:2px solid ${node.color===c?'#fff':'transparent'};cursor:pointer;padding:0" title="${c}"></button>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;font-size:11px;color:var(--text3);">
+        <div><strong style="color:var(--text2)">${kids(nodeId).length}</strong> children</div>
+        <div style="margin-left:auto">${node.dateModified ? new Date(node.dateModified).toLocaleDateString() : ''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="hdr-btn primary" style="flex:1;font-size:11px" onclick="addNode('${nodeId}')">+ Child</button>
+        <button class="hdr-btn" style="flex:1;font-size:11px" onclick="duplicateNode('${nodeId}')">⧉ Dup</button>
+        <button class="hdr-btn red" style="flex:1;font-size:11px" onclick="deleteNode('${nodeId}')">✕ Del</button>
+      </div>
+    </div>`;
+
+  const nameInp = document.getElementById('exp-prop-name');
+  if (nameInp) {
+    nameInp.focus(); nameInp.select();
+    nameInp.addEventListener('input', () => {
+      node.name = nameInp.value;
+      node.dateModified = new Date().toISOString();
+      expRenderTree();
+      renderTree();
+      save();
+    });
+  }
+}
+
+function expSetColor(c) {
+  const node = byId(expSelNodeId);
+  if (!node) return;
+  node.color = c;
+  node.dateModified = new Date().toISOString();
+  save(); renderTree(); expRenderTree(); expLoadProps(expSelNodeId);
+}
+
+// ── Tab switching ────────────────────────────────────────────
+function expSwitchTab(tab) {
+  document.getElementById('exp-tab-props').classList.toggle('active', tab === 'props');
+  document.getElementById('exp-tab-chat').classList.toggle('active',  tab === 'chat');
+  document.getElementById('exp-props-pane').classList.toggle('active', tab === 'props');
+  const chatPane = document.getElementById('exp-chat-pane');
+  chatPane.classList.toggle('active', tab === 'chat');
+
+  if (tab === 'chat') {
+    // move chatbot panel into exp-chat-pane
+    const chat = document.getElementById('chatbot-panel');
+    if (chat) { chatPane.appendChild(chat); chat.style.display = 'flex'; chat.classList.remove('in-main'); }
+  } else {
+    // move chatbot back to right-sidebar when leaving chat tab
+    const chat = document.getElementById('chatbot-panel');
+    const rs = document.getElementById('right-sidebar');
+    if (chat && rs && !rs.contains(chat)) { rs.appendChild(chat); }
+  }
+}
+
+// ── Resizable dividers ───────────────────────────────────────
+(function initExpDividers() {
+  function makeDraggable(divEl, getLeft, getRight, setLeft, setRight) {
+    divEl.addEventListener('mousedown', e => {
+      e.preventDefault();
+      divEl.classList.add('active');
+      const startX = e.clientX;
+      const startLeft  = getLeft();
+      const startRight = getRight();
+      const onMove = me => {
+        const dx = me.clientX - startX;
+        const newL = Math.max(160, startLeft  + dx);
+        const newR = Math.max(180, startRight - dx);
+        setLeft(newL);
+        setRight(newR);
+      };
+      const onUp = () => {
+        divEl.classList.remove('active');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+  }
+
+  makeDraggable(
+    document.getElementById('exp-div1'),
+    () => document.getElementById('exp-left').offsetWidth,
+    () => document.getElementById('exp-mid').offsetWidth,
+    w => { document.getElementById('exp-left').style.width = w + 'px'; },
+    w => { /* mid is flex:1 — just constrain left */ }
+  );
+
+  makeDraggable(
+    document.getElementById('exp-div2'),
+    () => document.getElementById('exp-mid').offsetWidth,
+    () => document.getElementById('exp-right').offsetWidth,
+    w => { /* mid is flex:1 */ },
+    w => { document.getElementById('exp-right').style.width = w + 'px'; }
+  );
+})();
+
+// Initialize EC canvas listeners once DOM is ready
+ecSetup();
 
 initApp();
 </script>

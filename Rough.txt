@@ -339,8 +339,25 @@ Enhancements :
 -- 1- RAG admin page in made inside app.py : it should be separet html file and placed in fronend folder 
 -- 2- Editing in main page.
 3- User should have first name and last name in place of user name. and the Deepak's Knowledge Tree should be updated with user first name not the user name.
-4- Node generator should be able to process PDF , DOC along with Text and Image.
+4- Node generator should be able to process PDF , DOC, URL data along with Text and Image.
 --5- When I paste some text , it  should keep same format and colour whcih is copied.
+
+- Add table in description
+
+- I should be able to Draw shaped and paint directly on description and it shold be saved.
+- Keep the geneated HTML as a theme ( wherer HTML would be generated at that time)
+- 4 new attributes fr the node , : Plan read date , Read compete date , planned revised date , revision complete date. 
+- Witihn 7days of Read date revison date should be there and would be marked read if not revised.
+- Create a study calander using the above details.
+- FAR Future Plan : Ask questions on topics and evluation.
+-
+
+can we create a excalidraw in the description.
+
+
+RAG : krish naik
+
+fall back model
 
 
 ---------------------------------------------------------

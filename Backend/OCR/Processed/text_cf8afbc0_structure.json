@@ -1,0 +1,190 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Chunking Types for Text Processing",
+      "description": "Different strategies for splitting text into smaller, manageable units, often used in NLP and RAG systems.",
+      "parentId": null
+    },
+    {
+      "id": "c1",
+      "label": "Fixed-size Chunking",
+      "description": "Splits text into equal token or character lengths.",
+      "parentId": "root"
+    },
+    {
+      "id": "d1_1",
+      "label": "How It Works",
+      "description": "Splits text into equal token/char lengths (e.g., 512 tokens, 50 overlap).",
+      "parentId": "c1"
+    },
+    {
+      "id": "d1_2",
+      "label": "Pros",
+      "description": "Simple, predictable, fast.",
+      "parentId": "c1"
+    },
+    {
+      "id": "d1_3",
+      "label": "Cons / Trade-offs",
+      "description": "Breaks sentences mid-thought, loses semantic meaning.",
+      "parentId": "c1"
+    },
+    {
+      "id": "d1_4",
+      "label": "Production Use Case",
+      "description": "Baseline for unstructured text or fast prototyping.",
+      "parentId": "c1"
+    },
+    {
+      "id": "c2",
+      "label": "Recursive Chunking",
+      "description": "Splits text along natural boundaries until the desired size is met.",
+      "parentId": "root"
+    },
+    {
+      "id": "d2_1",
+      "label": "How It Works",
+      "description": "Splits along natural boundaries (paragraph \u2192 sentence \u2192 word) until size fits.",
+      "parentId": "c2"
+    },
+    {
+      "id": "d2_2",
+      "label": "Pros",
+      "description": "Preserves context, widely adopted.",
+      "parentId": "c2"
+    },
+    {
+      "id": "d2_3",
+      "label": "Cons / Trade-offs",
+      "description": "More compute cost than fixed-size.",
+      "parentId": "c2"
+    },
+    {
+      "id": "d2_4",
+      "label": "Production Use Case",
+      "description": "Current production default (~512 tokens).",
+      "parentId": "c2"
+    },
+    {
+      "id": "c3",
+      "label": "Semantic Chunking",
+      "description": "Uses NLP to split text by meaning units.",
+      "parentId": "root"
+    },
+    {
+      "id": "d3_1",
+      "label": "How It Works",
+      "description": "Uses NLP to split by meaning units (sections, headings, paragraphs).",
+      "parentId": "c3"
+    },
+    {
+      "id": "d3_2",
+      "label": "Pros",
+      "description": "High retrieval precision, preserves meaning.",
+      "parentId": "c3"
+    },
+    {
+      "id": "d3_3",
+      "label": "Cons / Trade-offs",
+      "description": "Slower, uneven chunk sizes.",
+      "parentId": "c3"
+    },
+    {
+      "id": "d3_4",
+      "label": "Production Use Case",
+      "description": "Structured docs (manuals, legal, medical).",
+      "parentId": "c3"
+    },
+    {
+      "id": "c4",
+      "label": "Hierarchical Chunking",
+      "description": "Involves multi-level chunking for flexible retrieval granularity.",
+      "parentId": "root"
+    },
+    {
+      "id": "d4_1",
+      "label": "How It Works",
+      "description": "Multi-level chunks (doc \u2192 section \u2192 paragraph \u2192 sentence).",
+      "parentId": "c4"
+    },
+    {
+      "id": "d4_2",
+      "label": "Pros",
+      "description": "Flexible retrieval granularity.",
+      "parentId": "c4"
+    },
+    {
+      "id": "d4_3",
+      "label": "Cons / Trade-offs",
+      "description": "Complex indexing, higher infra cost.",
+      "parentId": "c4"
+    },
+    {
+      "id": "d4_4",
+      "label": "Production Use Case",
+      "description": "Large corpora with layered structure.",
+      "parentId": "c4"
+    },
+    {
+      "id": "c5",
+      "label": "Metadata-enriched Chunking",
+      "description": "Attaches additional information (metadata) to chunks to improve context and governance.",
+      "parentId": "root"
+    },
+    {
+      "id": "d5_1",
+      "label": "How It Works",
+      "description": "Attaches metadata (source, date, author, lineage) to chunks.",
+      "parentId": "c5"
+    },
+    {
+      "id": "d5_2",
+      "label": "Pros",
+      "description": "Boosts accuracy up to 5\u00d7, supports governance.",
+      "parentId": "c5"
+    },
+    {
+      "id": "d5_3",
+      "label": "Cons / Trade-offs",
+      "description": "Requires strong data management.",
+      "parentId": "c5"
+    },
+    {
+      "id": "d5_4",
+      "label": "Production Use Case",
+      "description": "Enterprise-grade RAG with compliance needs.",
+      "parentId": "c5"
+    },
+    {
+      "id": "c6",
+      "label": "Agentic / Context-graph Chunking",
+      "description": "Builds a graph of chunks with semantic links for advanced retrieval.",
+      "parentId": "root"
+    },
+    {
+      "id": "d6_1",
+      "label": "How It Works",
+      "description": "Builds graph of chunks with semantic links.",
+      "parentId": "c6"
+    },
+    {
+      "id": "d6_2",
+      "label": "Pros",
+      "description": "Improves retrieval by ~35% accuracy.",
+      "parentId": "c6"
+    },
+    {
+      "id": "d6_3",
+      "label": "Cons / Trade-offs",
+      "description": "Complex to implement, higher latency.",
+      "parentId": "c6"
+    },
+    {
+      "id": "d6_4",
+      "label": "Production Use Case",
+      "description": "Advanced agentic RAG pipelines.",
+      "parentId": "c6"
+    }
+  ]
+}
